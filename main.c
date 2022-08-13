@@ -255,6 +255,34 @@ void mcp_write(unsigned char addr, unsigned char reg, unsigned char data)
 
 unsigned char ledData[6] = {0x08,0x04,0x02,0x01,0x02,0x04};
 
+void test_I2C(void)
+{
+    init_I2C();
+    // mcp_init
+    mcp_init();
+    char i = 0;
+    unsigned char recDATA, prevB;
+    prevB = 0;
+    xprintf("START\r\n");
+    while(1){
+        recDATA = mcp_read(devAdd, 0x13);      // MCP23017portB_Read
+        if (recDATA != prevB) {
+            xprintf("B:%02X\r\n", recDATA);                      // PORTA???
+            prevB = recDATA;
+        }
+        mcp_write(devAdd, 0x12, ledData[i]);   // MCP23017portA_Write
+        if(i == 5){
+            i = 0;
+        }else{
+            i++;
+        }
+        delay_ms(100);
+    }
+}
+
+char *argv[] = { "zforth", NULL };
+extern int zmain(int ac, char **av);
+
 void main(void)
 {
 	DDPCONbits.JTAGEN = 0;	// disable JTAG port
@@ -266,34 +294,7 @@ void main(void)
     led_OFF();  // MCP23017 RESET
     delay_us(10);
     led_ON();
-    init_I2C();
-    // mcp_init
-    mcp_init();
-    char i = 0;
-    unsigned char recDATA, prevB;
-    prevB = 0;
-    printf("START\r\n");
-    while(1){
-        recDATA = mcp_read(devAdd, 0x13);      // MCP23017portB_Read
-        if (recDATA != prevB) {
-            printf("B:%02X\r\n", recDATA);                      // PORTA???
-            prevB = recDATA;
-        }
-        mcp_write(devAdd, 0x12, ledData[i]);   // MCP23017portA_Write
-        if(i == 5){
-            i = 0;
-        }else{
-            i++;
-        }
-        delay_ms(100);
-    }
 
-//    i2c_start_send(MCP_ADDR_WR, IOCON_ADRS);
-//    i2c_write(IOCON);
-    
-//    write_slave(0x40, 0x01);
-
-//    printf("END\r\n");
-
+    zmain (1, argv);
     return;
 }

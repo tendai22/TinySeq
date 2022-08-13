@@ -2,12 +2,26 @@
 //
 //
 
-#include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <inttypes.h>
 
 #include "zforth.h"
+
+#ifdef USE_STDIO
+#include <stdio.h>
+#endif //USE_STDIO
+#ifdef USE_XPRINTF
+#include "xprintf.h"
+#define dprintf xprintf
+#endif //USE_XPRINTF
+
+//
+// extern declaration
+//
+extern const char zf_src_core_file[];
+extern int _mon_getc(void);
+extern void _mon_putc(int c);
 
 /*
  * Evaluate buffer with code, check return value and report errors
@@ -36,9 +50,9 @@ zf_result do_eval(const char *src, int line, const char *buf)
 	}
 
 	if(msg) {
-		fprintf(stderr, "\033[31m");
-		if(src) fprintf(stderr, "%s:%d: ", src, line);
-		fprintf(stderr, "%s\033[0m\n", msg);
+		dprintf("\033[31m");
+		if(src) dprintf("%s:%d: ", src, line);
+		dprintf("%s\033[0m\n", msg);
 	}
 
 	return rv;
@@ -61,7 +75,7 @@ void include(const char *fname)
 		}
 		fclose(f);
 	} else {
-		fprintf(stderr, "error opening file '%s': %s\n", fname, strerror(errno));
+		dprintf("error opening file '%s': %s\n", fname, strerror(errno));
 	}
 #endif
 }
@@ -102,6 +116,31 @@ static void load(const char *fname)
 #endif
 }
 
+//
+// include from an embedded character array (which holds a source code)
+//
+
+void include_str(const char *fname, const char *str)
+{
+	char buf[256];
+	const char *src = str;
+	char *dest = buf;
+	int c, line = 1;
+	while ((c = *src++) != 0) {
+		if (c == '\r')
+			continue; 	// ignore carridge return
+		if (c != '\n') {
+			*dest++ = c;
+			continue;
+		}
+		// end of line
+		*dest = '\0';
+		dest = buf;
+		dprintf ("%s:%d:%s\r\n", fname, line, buf);
+		do_eval(fname, line++, buf);
+	}
+}
+
 /*
  * Sys callback function
  */
@@ -114,26 +153,36 @@ zf_input_state zf_host_sys(zf_syscall_id id, const char *input)
 		/* The core system callbacks */
 
 		case ZF_SYSCALL_EMIT:
-			putchar((char)zf_pop());
+			xputc((char)zf_pop());
+#ifdef USE_STDIO
 			fflush(stdout);
+#endif //USE_STDIO
 			break;
 
 		case ZF_SYSCALL_PRINT:
-			printf(ZF_CELL_FMT " ", zf_pop());
+			xprintf(ZF_CELL_FMT " ", zf_pop());
 			break;
 
 		case ZF_SYSCALL_TELL: {
 			zf_cell len = zf_pop();
 			void *buf = (uint8_t *)zf_dump(NULL) + (int)zf_pop();
+#ifdef USE_STDIO
 			(void)fwrite(buf, 1, len, stdout);
-			fflush(stdout); }
+			fflush(stdout);
+#endif //USE_STDIO
+#ifdef USE_XPRINTF
+			while (len-- > 0) {
+				xputc(*buf++);
+			}
+#endif //USE_XPRINTF
+			}
 			break;
 
 
 		/* Application specific callbacks */
 
 		case ZF_SYSCALL_USER + 0:
-			printf("\n");
+			xprintf("\r\n");
 			exit(0);
 			break;
 
@@ -153,7 +202,7 @@ zf_input_state zf_host_sys(zf_syscall_id id, const char *input)
 			break;
 
 		default:
-			printf("unhandled syscall %d\n", id);
+			printf("unhandled syscall %d\r\n", id);
 			break;
 	}
 
@@ -167,9 +216,9 @@ zf_input_state zf_host_sys(zf_syscall_id id, const char *input)
 
 void zf_host_trace(const char *fmt, va_list va)
 {
-	fprintf(stderr, "\033[1;30m");
-	vfprintf(stderr, fmt, va);
-	fprintf(stderr, "\033[0m");
+	dprintf("\033[1;30m");
+	vdprintf(fmt, va);
+	dprintf("\033[0m");
 }
 
 
@@ -190,14 +239,36 @@ zf_cell zf_host_parse_num(const char *buf)
 
 void usage(void)
 {
-	fprintf(stderr, 
-		"usage: zfort [options] [src ...]\n"
-		"\n"
-		"Options:\n"
-		"   -h         show help\n"
-		"   -t         enable tracing\n"
-		"   -l FILE    load dictionary from FILE\n"
+	dprintf( 
+		"usage: zfort [options] [src ...]\r\n"
+		"\r\n"
+		"Options:\r\n"
+		"   -h         show help\r\n"
+		"   -t         enable tracing\r\n"
+		"   -l FILE    load dictionary from FILE\r\n"
 	);
+}
+
+//
+//
+//
+
+int zf_fgets(char *buf, size_t len, FILE *fp)
+{
+    int i, c;
+    for (i = 0; i < len ; ) {
+        while ((c = _mon_getc()) == -1)
+            ;
+        if (i >= len - 1 || c == '\r' || c == '\n') {
+            buf[i] = '\0';
+            _mon_putc('\r');
+            _mon_putc('\n');
+            break;
+        }
+        buf[i++] = c;
+        _mon_putc(c);
+    }
+    return i;
 }
 
 /*
@@ -253,6 +324,8 @@ int zmain(int argc, char **argv)
 		include(argv[i]);
 	}
 
+	include_str("core.zf", &zf_src_core_file[0]);
+
 
 	/* Interactive interpreter: read a line using readline library,
 	 * and pass to zf_eval() for evaluation*/
@@ -281,9 +354,10 @@ int zmain(int argc, char **argv)
 #else
 	for(;;) {
 		char buf[256];
-		if(fgets(buf, sizeof(buf), stdin)) {
+		if(zf_fgets(buf, sizeof(buf), stdin)) {
+            printf("<%s>", buf);
 			do_eval("stdin", ++line, buf);
-			printf("\n");
+			printf("\r\n");
 		} else {
 			break;
 		}

@@ -57,4 +57,10 @@ typedef uint32_t zf_addr;
 #define ZF_DSTACK_SIZE 32
 #define ZF_RSTACK_SIZE 32
 
+/* use <stdio.h> printf library */
+//#define USE_STDIO
+
+/* use Chan-san's xprintf family functions */
+#define USE_XPRINTF
+
 #endif //zfconf
