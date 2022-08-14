@@ -54,6 +54,7 @@ target_link_libraries(tinyseq pico_stdlib
 
 # use UART
 pico_enable_stdio_uart(tinyseq 0)
+pico_enable_stdio_usb(tinyseq 1)
 
 # create map/bin/hex file etc.
 pico_add_extra_outputs(tinyseq)

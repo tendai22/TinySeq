@@ -44,15 +44,22 @@
 #include "xprintf.h"
 #endif //USE_XPRINTF
 
+//
+// UART or USB-CDC ?
+//
+#define USE_CDC
+//#define USE_UART
+
 #include "pico/stdlib.h"
-#include "pico/stdio_uart.h"
-#include "hardware/uart.h"
 
 extern int zmain(int argc, char **argv);
 
 //
-// machine dependent console functions
+// machine dependent uart console functions
 //
+#ifdef USE_UART
+#include "pico/stdio_uart.h"
+#include "hardware/uart.h"
 #define UART_ID uart_default
 #define BAUD_RATE 115200
 
@@ -88,14 +95,89 @@ void _mon_putc(int c)
     sleep();
   uart_putc(UART_ID, (char)c);
 }
+#endif //USE_UART
 
 
+
+#ifdef USE_CDC
+#include "class/cdc/cdc_device.h"
+
+static void sleep(void)
+{
+  sleep_us(100);    // 100us wait
+}
+
+void con_init(void)
+{
+  char dummy;
+  stdio_init_all();
+  while(tud_cdc_available() > 0)
+    tud_cdc_read(&dummy, 1);
+}
+
+int _mon_getc(void)
+{
+  char c;
+  if (tud_cdc_available() > 0) {
+    tud_cdc_read(&c, 1);
+    return c;
+  }
+  sleep();
+  if (tud_cdc_available() > 0) {
+    tud_cdc_read(&c, 1);
+    return c;
+  }
+  return -1;
+}
+
+void _mon_putc(int c)
+{
+  char dummy = (char)c;
+  tud_cdc_write_flush();
+  tud_cdc_write(&dummy, 1);
+}
+
+#endif //USE_CDC
+
+#if 1
 int main(int argc, char **argv)
 {
   con_init();
   zmain(argc, argv);
   return 0;
 }
+#endif
+
+#ifdef TEST_BUILDENVIRONMENT
+int main() {
+#ifndef PICO_DEFAULT_LED_PIN
+#warning blink example requires a board with a regular LED
+#else
+    const uint LED_PIN = PICO_DEFAULT_LED_PIN;
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+    while (true) {
+        gpio_put(LED_PIN, 1);
+        sleep_ms(500);
+        gpio_put(LED_PIN, 0);
+        sleep_ms(500);
+    }
+#endif
+}
+#endif //TEST_BUILDENVIRONMENT
+
+#ifdef TEST_CONSOLE
+int main(){
+  int c;
+  con_init();
+  printf("hello, world!\n");
+  while (1) {
+    while ((c = _mon_getc()) == -1);
+    _mon_putc(c);
+  }
+  return 0;
+}
+#endif //TEST_CONSOLE
 
 void
 platform_reset
