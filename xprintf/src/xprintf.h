@@ -5,6 +5,7 @@
 #ifndef XPRINTF_DEF
 #define XPRINTF_DEF
 #include <string.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,7 +17,7 @@ extern "C" {
 #define	XF_USE_LLI		0	/* 1: Enable long long integer in size prefix ll */
 #define	XF_USE_FP		0	/* 1: Enable support for floating point in type e and f */
 #define XF_DPC			'.'	/* Decimal separator for floating point */
-#define XF_USE_INPUT	0	/* 1: Enable input functions */
+#define XF_USE_INPUT	1	/* 1: Enable input functions */
 #define	XF_INPUT_ECHO	0	/* 1: Echo back input chars in xgets function */
 
 #if defined(__GNUC__) && __GNUC__ >= 10
@@ -32,7 +33,7 @@ void xputs (const char* str);
 void xfputs (void (*func)(int), const char* str);
 void xprintf (const char* fmt, ...);
 void xsnprintf (char* buff, size_t len, const char* fmt, ...);
-void xvfprintf (void (*func)(int), const char* fmt, ...);
+void xvfprintf (void (*func)(int), const char* fmt, va_list arp);
 void put_dump (const void* buff, unsigned long addr, int len, size_t width);
 #endif
 

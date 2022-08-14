@@ -232,7 +232,7 @@ void xfputs (			/* Put a string to the specified device */
     xprintf("%.4E", 123.45678);		"1.2346E+02"	<XF_USE_FP>
 */
 
-static void xvfprintf (
+void xvfprintf (
 	void(*func)(int),	/* Pointer to the output function */
 	const char*	fmt,	/* Pointer to the format string */
 	va_list arp			/* Pointer to arguments */
@@ -401,7 +401,7 @@ void xfprintf (			/* Put a formatted string to the specified device */
 
 void xsnprintf (			/* Put a formatted string to the memory */
 	char* buff,			/* Pointer to the output buffer */
-	int size,			/* buffer size */
+	size_t size,			/* buffer size */
 	const char*	fmt,	/* Pointer to the format string */
 	...					/* Optional arguments */
 )
