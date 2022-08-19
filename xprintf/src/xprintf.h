@@ -6,6 +6,7 @@
 #define XPRINTF_DEF
 #include <string.h>
 #include <stdarg.h>
+#include <inttypes.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,7 +42,7 @@ void put_dump (const void* buff, unsigned long addr, int len, size_t width);
 #define xdev_in(func) xfunc_input = (int(*)(void))(func)
 extern int (*xfunc_input)(void);
 int xgets (char* buff, int len);
-int xatoi (char** str, long* res);
+int xatoi (const char** str, int32_t* res);
 int xatof (char** str, double* res);
 #endif
 

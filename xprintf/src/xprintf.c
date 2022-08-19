@@ -527,8 +527,8 @@ int xgets (			/* 0:End of stream, 1:A line arrived */
 */
 
 int xatoi (			/* 0:Failed, 1:Successful */
-	char **str,		/* Pointer to pointer to the string */
-	long *res		/* Pointer to the valiable to store the value */
+	const char **str,		/* Pointer to pointer to the string */
+	int32_t *res		/* Pointer to the valiable to store the value */
 )
 {
 	unsigned long val;
