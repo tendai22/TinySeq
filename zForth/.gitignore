@@ -3,6 +3,5 @@ go
 *.o
 *.swp
 *.swo
-zforth
 zforth.save
 .zforth.hist
