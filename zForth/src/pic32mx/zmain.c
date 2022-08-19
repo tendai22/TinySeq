@@ -13,7 +13,7 @@
 #endif //USE_STDIO
 #ifdef USE_XPRINTF
 #include "xprintf.h"
-#define dprintf xprintf
+//#define yprintf xprintf
 #endif //USE_XPRINTF
 
 //
@@ -50,9 +50,9 @@ zf_result do_eval(const char *src, int line, const char *buf)
 	}
 
 	if(msg) {
-		dprintf("\033[31m");
-		if(src) dprintf("%s:%d: ", src, line);
-		dprintf("%s\033[0m\n", msg);
+		yprintf("\033[31m");
+		if(src) yprintf("%s:%d: ", src, line);
+		yprintf("%s\033[0m\n", msg);
 	}
 
 	return rv;
@@ -75,7 +75,7 @@ void include(const char *fname)
 		}
 		fclose(f);
 	} else {
-		dprintf("error opening file '%s': %s\n", fname, strerror(errno));
+		yprintf("error opening file '%s': %s\n", fname, strerror(errno));
 	}
 #endif
 }
@@ -136,7 +136,7 @@ void include_str(const char *fname, const char *str)
 		// end of line
 		*dest = '\0';
 		dest = buf;
-		dprintf ("%s:%d:%s\r\n", fname, line, buf);
+		yprintf ("%s:%d:%s\r\n", fname, line, buf);
 		do_eval(fname, line++, buf);
 	}
 }
@@ -216,9 +216,9 @@ zf_input_state zf_host_sys(zf_syscall_id id, const char *input)
 
 void zf_host_trace(const char *fmt, va_list va)
 {
-	dprintf("\033[1;30m");
-	vdprintf(fmt, va);
-	dprintf("\033[0m");
+	yprintf("\033[1;30m");
+	vyprintf(fmt, va);
+	yprintf("\033[0m");
 }
 
 
@@ -239,7 +239,7 @@ zf_cell zf_host_parse_num(const char *buf)
 
 void usage(void)
 {
-	dprintf( 
+	yprintf( 
 		"usage: zfort [options] [src ...]\r\n"
 		"\r\n"
 		"Options:\r\n"

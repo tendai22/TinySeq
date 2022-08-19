@@ -28,12 +28,12 @@ extern const char zf_src_core_file[];
 void (*xfunc_output)(int) = _mon_putc;
 
 
-void vdprintf(const char *fmt, va_list arp)
+void vyprintf(const char *fmt, va_list arp)
 {
 	xvfprintf(_mon_putc, fmt, arp);
 }
 
-void dprintf(const char *fmt, ...)
+void yprintf(const char *fmt, ...)
 {
 	va_list arp;
 	va_start(arp, fmt);
@@ -69,9 +69,9 @@ zf_result do_eval(const char *src, int line, const char *buf)
 	}
 
 	if(msg) {
-		dprintf("\033[31m");
-		if(src) dprintf("%s:%d: ", src, line);
-		dprintf("%s\033[0m\n", msg);
+		yprintf("\033[31m");
+		if(src) yprintf("%s:%d: ", src, line);
+		yprintf("%s\033[0m\n", msg);
 	}
 
 	return rv;
@@ -97,7 +97,7 @@ void include_str(const char *fname, const char *str)
 		// end of line
 		*dest = '\0';
 		dest = buf;
-		//dprintf ("%s:%d:%s\r\n", fname, line, buf);
+		//yprintf ("%s:%d:%s\r\n", fname, line, buf);
 		do_eval(fname, line++, buf);
 	}
 }
@@ -165,9 +165,9 @@ zf_input_state zf_host_sys(zf_syscall_id id, const char *input)
 
 void zf_host_trace(const char *fmt, va_list va)
 {
-	dprintf("\033[1;30m");
-	vdprintf(fmt, va);
-	dprintf("\033[0m");
+	yprintf("\033[1;30m");
+	vyprintf(fmt, va);
+	yprintf("\033[0m");
 }
 
 
@@ -190,7 +190,7 @@ zf_cell zf_host_parse_num(const char *buf)
 
 void usage(void)
 {
-	dprintf( 
+	yprintf( 
 		"usage: zfort [options] [src ...]\r\n"
 		"\r\n"
 		"Options:\r\n"

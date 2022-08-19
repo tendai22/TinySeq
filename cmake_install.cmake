@@ -1,4 +1,4 @@
-# Install script for directory: /home/kuma/tmp/TinySeq
+# Install script for directory: /home/kuma/TinySeq
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,7 +34,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/kuma/tmp/TinySeq/pico-sdk/cmake_install.cmake")
+  include("/home/kuma/TinySeq/pico-sdk/cmake_install.cmake")
 
 endif()
 
@@ -46,5 +46,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/kuma/tmp/TinySeq/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/kuma/TinySeq/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

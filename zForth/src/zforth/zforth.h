@@ -70,8 +70,8 @@ zf_cell zf_host_parse_num(const char *buf);
 /* zmain functions */
 extern int _mon_getc(void);
 extern void _mon_putc(int c);
-extern void vdprintf(const char *fmt, va_list arp);
-extern void dprintf(const char *fmt, ...);
+extern void vyprintf(const char *fmt, va_list arp);
+extern void yprintf(const char *fmt, ...);
 extern zf_result do_eval(const char *src, int line, const char *buf);
 extern int zmain(int argc, char **argv);
 
