@@ -1,0 +1,7 @@
+go
+*.d
+*.o
+*.swp
+*.swo
+zforth.save
+.zforth.hist
