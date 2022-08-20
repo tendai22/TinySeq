@@ -22,6 +22,7 @@ add_compile_options(-Wall
         -Wno-format          # int != int32_t as far as the compiler is concerned because gcc has int32_t as long int
         -Wno-unused-function # we have some for the docs that aren't called
         -Wno-maybe-uninitialized
+        -I.
         -I../zForth/src/zforth
         -I../zForth/src/pico
         -I../xprintf/src
@@ -33,8 +34,7 @@ add_executable(tinyseq
         ./main-pico.c
         ../zForth/src/zforth/zforth.h
         ../zForth/src/zforth/zforth.c
-        ../zForth/src/pico/zmain.c
-        ../zForth/src/pico/zfconf.h
+        ../zForth/src/zforth/zmain.c
         ../zForth/forth/core.c
         ../xprintf/src/xprintf.h
         ../xprintf/src/xprintf.c
