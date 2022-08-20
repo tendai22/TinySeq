@@ -7,8 +7,8 @@ DEPS    := $(subst .c,.d, $(SRC))
 
 CC	:= $(CROSS)gcc
 
-VPATH   := ../zforth ../../../xprintf/src ../../forth
-CFLAGS	+= -I. -I../zforth -I../../../xprintf/src
+VPATH   := ../zForth/src/zforth ../xprintf/src ../zForth/forth
+CFLAGS	+= -I. -I../zForth/src/zforth -I../xprintf/src
 CFLAGS  += -Os -g -pedantic -MMD
 CFLAGS  += -fsanitize=address -Wall -Wextra -Werror -Wno-unused-parameter -Wno-clobbered -Wno-unused-result
 LDFLAGS	+= -fsanitize=address -g 
