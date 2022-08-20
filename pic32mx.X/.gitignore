@@ -1,0 +1,4 @@
+build/
+dist/
+junk/
+.generated_files/
