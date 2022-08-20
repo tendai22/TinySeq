@@ -6,5 +6,5 @@
 CND_BASEDIR=`pwd`
 # default configuration
 CND_ARTIFACT_DIR_default=dist/default/production
-CND_ARTIFACT_NAME_default=TinySeq.X.production.hex
-CND_ARTIFACT_PATH_default=dist/default/production/TinySeq.X.production.hex
+CND_ARTIFACT_NAME_default=pic32mx.X.production.hex
+CND_ARTIFACT_PATH_default=dist/default/production/pic32mx.X.production.hex

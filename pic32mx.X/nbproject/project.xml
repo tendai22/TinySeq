@@ -14,6 +14,9 @@
             <make-dep-projects/>
             <sourceRootList>
                 <sourceRootElem>.</sourceRootElem>
+                <sourceRootElem>../zForth/forth</sourceRootElem>
+                <sourceRootElem>../xprintf/src</sourceRootElem>
+                <sourceRootElem>../zForth/src/zforth</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>

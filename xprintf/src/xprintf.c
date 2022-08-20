@@ -25,8 +25,8 @@
 
 #if XF_USE_OUTPUT
 #include <stdarg.h>
-void (*xfunc_output)(int);	/* Pointer to the default output device */
-static char *strptr;		/* Pointer to the output memory (used by xsprintf) */
+void (*xfunc_output)(int) = NULL;	/* Pointer to the default output device */
+static char *strptr = NULL;		/* Pointer to the output memory (used by xsprintf) */
 static int rest_num;		/* buffer size -1 at xsnprintf */
 
 

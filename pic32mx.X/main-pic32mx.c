@@ -47,7 +47,10 @@
 // Use project enums instead of #define for ON and OFF.
 
 #include <xc.h>
-#include <stdio.h>
+//#include <stdio.h>
+#include <stdarg.h>
+#include "zforth.h"
+#include "xprintf.h"
 
 void delay_us(volatile unsigned int usec)        //1?sec??
 {
@@ -131,7 +134,7 @@ int _mon_getc(void)
     return (char)U1RXREG;
 }
 
-void _mon_putc(char c)
+void _mon_putc(int c)
 {
     while(U1STAbits.UTXBF)  // buffer full?
         ;
@@ -295,6 +298,6 @@ void main(void)
     delay_us(10);
     led_ON();
 
-    zmain (1, argv);
+    zmain (0, NULL);
     return;
 }

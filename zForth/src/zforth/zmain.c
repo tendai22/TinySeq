@@ -25,7 +25,7 @@ extern const char zf_src_core_file[];
 //
 #ifdef USE_XPRINTF
 
-void (*xfunc_output)(int) = _mon_putc;
+//void (*xfunc_output)(int) = _mon_putc;
 
 
 void vyprintf(const char *fmt, va_list arp)
@@ -237,6 +237,8 @@ int zmain(int argc, char **argv)
 
 	zf_init(trace);
 
+	xfunc_output = _mon_putc;
+
 
 	/* Load dict from disk if requested, otherwise bootstrap fort
 	 * dictionary */
@@ -252,7 +254,7 @@ int zmain(int argc, char **argv)
 	 * interactive interpreter
 	 */
 	while (1) {
-		char buf[256];
+		char buf[80];
 		if(zf_fgets(buf, sizeof(buf)/*, stdin*/)) {
 			do_eval("conin", ++line, buf);
 		} else {
