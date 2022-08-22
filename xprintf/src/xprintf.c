@@ -497,7 +497,7 @@ int xgets (			/* 0:End of stream, 1:A line arrived */
 		if (c < 0 || c == '\r') break;	/* End of stream or CR? */
 		if (c == '\b' && i) {		/* BS? */
 			i--;
-			if (XF_INPUT_ECHO) xputc(c);
+			if (XF_INPUT_ECHO) { xputc(c); xputc(' '); xputc(c); }
 			continue;
 		}
 		if (c >= ' ' && i < len - 1) {	/* Visible chars? */

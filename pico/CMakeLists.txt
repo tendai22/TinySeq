@@ -32,11 +32,9 @@ add_compile_options(-Wall
 
 add_executable(tinyseq
         ./main-pico.c
-        ../zForth/src/zforth/zforth.h
         ../zForth/src/zforth/zforth.c
         ../zForth/src/zforth/zmain.c
         ../zForth/forth/core.c
-        ../xprintf/src/xprintf.h
         ../xprintf/src/xprintf.c
         )
 

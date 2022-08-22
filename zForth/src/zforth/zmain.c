@@ -80,12 +80,12 @@ zf_result do_eval(const char *src, int line, const char *buf)
 //
 // include from an embedded character array (which holds a source code)
 //
+static char _buf[256];
 
 void include_str(const char *fname, const char *str)
 {
-	char buf[256];
 	const char *src = str;
-	char *dest = buf;
+	char *dest = _buf;
 	int c, line = 1;
 	while ((c = *src++) != 0) {
 		if (c == '\r')
@@ -96,9 +96,9 @@ void include_str(const char *fname, const char *str)
 		}
 		// end of line
 		*dest = '\0';
-		dest = buf;
-		//yprintf ("%s:%d:%s\r\n", fname, line, buf);
-		do_eval(fname, line++, buf);
+		dest = _buf;
+		yprintf ("%s:%d:%s\r\n", fname, line, _buf);
+		do_eval(fname, line++, _buf);
 	}
 }
 
@@ -200,32 +200,11 @@ void usage(void)
 	);
 }
 
-//
-//
-//
-
-int zf_fgets(char *buf, size_t len/*, FILE *fp*/)
-{
-	size_t i;
-    int c;
-    for (i = 0; i < len ; ) {
-        while ((c = _mon_getc()) == -1)
-            ;
-        if (i >= len - 1 || c == '\r' || c == '\n') {
-            buf[i] = '\0';
-            _mon_putc('\r');
-            _mon_putc('\n');
-            break;
-        }
-        buf[i++] = c;
-        _mon_putc(c);
-    }
-    return (int)i;
-}
 
 /*
  * Main
  */
+static char linebuf[80];
 
 int zmain(int argc, char **argv)
 {
@@ -236,8 +215,6 @@ int zmain(int argc, char **argv)
 	/* Initialize zforth */
 
 	zf_init(trace);
-
-	xfunc_output = _mon_putc;
 
 
 	/* Load dict from disk if requested, otherwise bootstrap fort
@@ -254,9 +231,8 @@ int zmain(int argc, char **argv)
 	 * interactive interpreter
 	 */
 	while (1) {
-		char buf[80];
-		if(zf_fgets(buf, sizeof(buf)/*, stdin*/)) {
-			do_eval("conin", ++line, buf);
+		if(xgets(linebuf, sizeof(linebuf)) > 0) {
+			do_eval("conin", ++line, linebuf);
 		} else {
 			break;
 		}

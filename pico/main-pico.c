@@ -118,32 +118,40 @@ void con_init(void)
 int _mon_getc(void)
 {
   char c;
-  if (tud_cdc_available() > 0) {
-    tud_cdc_read(&c, 1);
-    return c;
-  }
-  sleep();
-  if (tud_cdc_available() > 0) {
-    tud_cdc_read(&c, 1);
-    return c;
-  }
-  return -1;
+  while (tud_cdc_available() == 0)
+    ;
+  tud_cdc_read(&c, 1);
+  return c;
 }
 
 void _mon_putc(int c)
 {
   char dummy = (char)c;
-  tud_cdc_write_flush();
   tud_cdc_write(&dummy, 1);
+  tud_cdc_write_flush();
+}
+
+void _mon_putc2(int c)
+{
+  if (c == '\n')
+    _mon_putc('\r');
+  _mon_putc(c);
 }
 
 #endif //USE_CDC
 
 #if 1
+char buf[40];
+
 int main(int argc, char **argv)
 {
   con_init();
+	xdev_out(_mon_putc);
+  xdev_in(_mon_getc);
+
+  xprintf("START\n");
   zmain(argc, argv);
+  xprintf("END\n");
   return 0;
 }
 #endif
