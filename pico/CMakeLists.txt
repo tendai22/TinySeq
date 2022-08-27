@@ -22,10 +22,6 @@ add_compile_options(-Wall
         -Wno-format          # int != int32_t as far as the compiler is concerned because gcc has int32_t as long int
         -Wno-unused-function # we have some for the docs that aren't called
         -Wno-maybe-uninitialized
-        -I.
-        -I../zForth/src/zforth
-        -I../zForth/src/pico
-        -I../xprintf/src
         )
 
 # source code specifications
@@ -40,6 +36,12 @@ add_executable(tinyseq
 
 target_compile_options(tinyseq
         PUBLIC -DMCU_PICO
+        )
+
+target_include_directories(tinyseq
+        PUBLIC . ../zForth/src/zforth
+        ../zForth/src/pico
+        ../xprintf/src
         )
 
 
