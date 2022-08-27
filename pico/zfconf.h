@@ -45,7 +45,7 @@ typedef int32_t zf_cell;
 #define ZF_CELL_FMT "%d"
 
 
-/* The type to use for pointers and adresses. 'unsigned int' is usually a good
+/* The type to use for pointers and addresses. 'unsigned int' is usually a good
  * choice for best performance and smallest code size */
 
 //typedef unsigned int zf_addr;
@@ -59,9 +59,6 @@ typedef uint32_t zf_addr;
 #define ZF_DICT_SIZE 4096
 #define ZF_DSTACK_SIZE 32
 #define ZF_RSTACK_SIZE 32
-
-/* use <stdio.h> printf library */
-//#define USE_STDIO
 
 /* use Chan-san's xprintf family functions */
 #define USE_XPRINTF

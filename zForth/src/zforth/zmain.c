@@ -8,12 +8,9 @@
 
 #include "zforth.h"
 
-#ifdef USE_STDIO
-#include <stdio.h>
-#endif //USE_STDIO
-#ifdef USE_XPRINTF
+//#define USE_XPRINTF
+
 #include "xprintf.h"
-#endif //USE_XPRINTF
 
 //
 // extern declaration
@@ -23,8 +20,6 @@ extern const char zf_src_core_file[];
 //
 // xprintf support functions
 //
-#ifdef USE_XPRINTF
-
 //void (*xfunc_output)(int) = _mon_putc;
 
 
@@ -40,7 +35,6 @@ void yprintf(const char *fmt, ...)
 	xvfprintf(_mon_putc, fmt, arp);
 	va_end(arp);
 }
-#endif // USE_XPRINTF
 
 /*
  * Evaluate buffer with code, check return value and report errors
@@ -97,7 +91,7 @@ void include_str(const char *fname, const char *str)
 		// end of line
 		*dest = '\0';
 		dest = _buf;
-		yprintf ("%s:%d:%s\r\n", fname, line, _buf);
+		//yprintf ("%s:%ld:%s\r\n", fname, line, _buf);
 		do_eval(fname, line++, _buf);
 	}
 }

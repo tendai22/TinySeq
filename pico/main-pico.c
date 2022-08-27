@@ -111,8 +111,14 @@ void con_init(void)
 {
   char dummy;
   stdio_init_all();
+  // flush any previous gurbage input data
   while(tud_cdc_available() > 0)
     tud_cdc_read(&dummy, 1);
+  // some wait for TinyUSB CDC module to startup
+  // so far 1sec seems to be enough.
+  // If we check tud_cdd_write failure to write, this 1sec
+  // waiting might not be needed.
+  sleep_ms(1000);
 }
 
 int _mon_getc(void)
@@ -127,7 +133,10 @@ int _mon_getc(void)
 void _mon_putc(int c)
 {
   char dummy = (char)c;
-  tud_cdc_write(&dummy, 1);
+  while (tud_cdc_write(&dummy, 1) != 1)
+    ;
+  // tud_cdc_write sometimes fails to write (even) one byte.
+  // so return value check is needed.
   tud_cdc_write_flush();
 }
 
@@ -140,6 +149,33 @@ void _mon_putc2(int c)
 
 #endif //USE_CDC
 
+//#define TEST_XPRINTF
+#ifdef TEST_XPRINTF
+void test_xprintf(void)
+{
+  xprintf("%d\n", 1234);			//"1234"
+  xprintf("%6d,%3d%%\n", -200, 5);	//"  -200,  5%"
+  xprintf("%-6u\n", 100);			//"100   "
+  xprintf("%ld\n", 12345678);		//"12345678"
+  //xprintf("%llu", 0x100000000);	//"4294967296"	<XF_USE_LLI>
+  //xprintf("%lld", -1LL);			//"-1"			<XF_USE_LLI>
+  xprintf("%04x\n", 0xA3);			//"00a3"
+  xprintf("%08lX\n", 0x123ABC);		//"00123ABC"
+  xprintf("%016b\n", 0x550F);		//"0101010100001111"
+  xprintf("%*d\n", 6, 100);			//"   100"
+  xprintf("%s\n", "String");		//"String"
+  xprintf("%5s\n", "abc");			//"  abc"
+  xprintf("%-5s\n", "abc");			//"abc  "
+  xprintf("%-5s\n", "abcdefg");		//"abcdefg"
+  xprintf("%-5.5s\n", "abcdefg");	//"abcde"
+  xprintf("%-.5s\n", "abcdefg");	//"abcde"
+  xprintf("%-5.5s\n", "abc");		//"abc  "
+  xprintf("%c\n", 'a');				//"a"
+  //xprintf("%12f", 10.0);			"   10.000000"	<XF_USE_FP>
+  //xprintf("%.4E", 123.45678);		"1.2346E+02"	<XF_USE_FP>
+}
+#endif //XPRINTF_TEST
+
 #if 1
 char buf[40];
 
@@ -149,9 +185,13 @@ int main(int argc, char **argv)
 	xdev_out(_mon_putc);
   xdev_in(_mon_getc);
 
-  xprintf("START\n");
+#ifdef TEST_XPRINTF
+  test_xprintf();
+#endif //XPRINTF_TEST
+
   zmain(argc, argv);
   xprintf("END\n");
+  while (1);
   return 0;
 }
 #endif
@@ -186,11 +226,3 @@ int main(){
   return 0;
 }
 #endif //TEST_CONSOLE
-
-void
-platform_reset
-(void)
-{
-  // so far, a temporal remedy
-  xprintf("platform_reset should be implemented.");
-}
