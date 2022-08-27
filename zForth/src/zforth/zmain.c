@@ -18,6 +18,20 @@
 extern const char zf_src_core_file[];
 
 //
+// getline, which we need to define in each platform
+//
+// In UNIX/Linux environments, we define getline function as calling gets_s
+// in main.c.  In these environemnts, line edit functionality is provided in tty driver.
+// So we depend on it, and need not implement any explicit line edit functinlality 
+// In most embedded environments including pico, pic32mx, ..., no line edit functionality
+// is provided in their library, so we write getline function in their main.c 
+// using 'xgets' function in 'xprintf' package.
+//
+// getline returns number of characters in the buffer, 'buf'.
+//
+extern int zf_getline (char *buf, int length);
+
+//
 // xprintf support functions
 //
 //void (*xfunc_output)(int) = _mon_putc;
@@ -200,7 +214,7 @@ void usage(void)
  */
 static char linebuf[80];
 
-int zmain(int argc, char **argv)
+int zf_main(int argc, char **argv)
 {
 //	int i;
 	int trace = 0;
@@ -225,7 +239,7 @@ int zmain(int argc, char **argv)
 	 * interactive interpreter
 	 */
 	while (1) {
-		if(xgets(linebuf, sizeof(linebuf)) > 0) {
+		if(zf_getline(linebuf, sizeof(linebuf)) >= 0) {
 			do_eval("conin", ++line, linebuf);
 		} else {
 			break;

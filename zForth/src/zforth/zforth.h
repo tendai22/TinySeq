@@ -67,7 +67,7 @@ zf_input_state zf_host_sys(zf_syscall_id id, const char *last_word);
 void zf_host_trace(const char *fmt, va_list va);
 zf_cell zf_host_parse_num(const char *buf);
 
-int zf_getline(char *buf, size_t len);
+int zf_getline(char *buf, int len);
 
 /* zmain functions */
 extern int _mon_getc(void);
@@ -76,7 +76,7 @@ extern void _mon_putc2(int c);
 extern void vyprintf(const char *fmt, va_list arp);
 extern void yprintf(const char *fmt, ...);
 extern zf_result do_eval(const char *src, int line, const char *buf);
-extern int zmain(int argc, char **argv);
+extern int zf_main(int argc, char **argv);
 
 
 #endif

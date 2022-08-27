@@ -149,6 +149,12 @@ void _mon_putc2(int c)
 
 #endif //USE_CDC
 
+int zf_getline(char *buf, int siz)
+{
+  xgets(buf, siz);
+  return strlen(buf);
+}
+
 //#define TEST_XPRINTF
 #ifdef TEST_XPRINTF
 void test_xprintf(void)
@@ -189,8 +195,8 @@ int main(int argc, char **argv)
   test_xprintf();
 #endif //XPRINTF_TEST
 
-  zmain(argc, argv);
-  xprintf("END\n");
+  zf_main(argc, argv);
+  xprintf("end of zf_main\n");
   while (1);
   return 0;
 }
