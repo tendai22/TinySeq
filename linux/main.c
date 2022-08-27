@@ -19,6 +19,8 @@
 #include "zforth.h"
 #include "xprintf.h"
 
+#include <stdio.h>
+
 /*
  *
  */
@@ -38,12 +40,35 @@ void _mon_putc(int c)
 }
 
 /*
+ * getline function, using gets_s
+*/
+
+int zf_getline (char *buf, int length)
+{
+
+	fgets(buf, length, stdin);
+	int len = strlen(buf);
+	if (len > 1 && buf[len - 1] == '\n')
+		buf[len - 1] = '\0';
+	int res = feof(stdin) ? -1 : (ferror(stdin) ? -1 : (int)strlen(buf));
+	return res;
+}
+
+/*
  * Main
  */
 
 int main(int argc, char **argv)
 {
-	zmain (0, NULL);
+	// xprintf initialize
+	xdev_out(_mon_putc);
+  	xdev_in(_mon_getc);
+
+	// all-in-one zforth interpreter
+	zf_main (0, NULL);
+	
+	// end-of-zf_main marking
+	yprintf("end of zf_main\n");
 	return 0;
 }
 
