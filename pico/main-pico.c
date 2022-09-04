@@ -232,7 +232,7 @@ int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
   switch(id) {
   case 1000:  // begin_cycle
   case 1001:  // tribial change   
-    
+  case 1002:  // tribial change 2   
 
   }
 }
