@@ -113,9 +113,20 @@ void include_str(const char *fname, const char *str)
 /*
  * Sys callback function
  */
+static int (*custom_func)(zf_syscall_id, const char *) = NULL;
+
+void zf_add_syscall(int (*func)(zf_syscall_id, const char *))
+{
+	custom_func = func;
+}
+
 
 zf_input_state zf_host_sys(zf_syscall_id id, const char *input)
 {
+	int res;
+	if (custom_func && (res = (*custom_func)(id, input)) != 0) {
+		return ZF_INPUT_INTERPRET;
+	}
 	switch((int)id) {
 
 		/* The core system callbacks */

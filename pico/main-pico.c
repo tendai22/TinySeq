@@ -155,6 +155,88 @@ int zf_getline(char *buf, int siz)
   return strlen(buf);
 }
 
+//
+// PLC module
+//
+#define NUM_INPORT 32
+#define NUM_OUTPORT 32
+#define NUM_COILPORT 32
+
+//
+// bit value holding IN/OUT port
+//
+int32_t inport;
+int32_t outport;
+int32_t coilport;
+
+int32_t cur_inport;
+int32_t cur_outport;
+int32_t cur_coilport;
+
+//
+// rest timer count for COIL, which counts remaining count number for fire
+// (ON-Delay or OFF-Delay), actially toggle (EX-OR) its value.
+//
+int16_t rest_count[NUM_COILPORT];
+
+//
+// timer function
+//
+void do_timer(void)
+{
+  int32_t mask = 1;
+  // activate ON-Delay/OFF-Delay if counter becomes zero
+  for (int i = 0; i < NUM_COILPORT; ++i, mask<<=1) {
+    if (rest_count[i] > 0 && --rest_count[i] == 0) {
+      // toggle coil value
+      cur_coilport ^= mask;
+    }
+  }
+  // examine inport
+  cur_inport = get_inport();
+  // if any changes occur, do 'ladder' function
+  if (cur_coilport != coilport || cur_inport != inport) {
+    cur_outport = do_ladder(cur_inport, cur_coilport);
+    put_outport(cur_outport);
+  }
+}
+
+#define _X 65536
+const uint32_t _ma[32] = {
+  1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 4096*2, 4096*4, 4096*8,
+  _X, 2*_X, 4*_X, 8*_X, 16*_X, 32*_X, 64*_X, 128*_X, 256*_X, 512_*X, 1024*_X, 2048*_X, 
+  4096*_X, 4096*2*_X, 4096*4*_X, 4096*8*_X
+}
+
+/**
+ * primitives
+ * L
+ * --
+ * Xnnn
+ * Mnnn
+ * Ynnn
+ * !Xnnn
+ * !Mnnn
+ * !Ynnn
+ * 
+ */ 
+
+//
+// custom syscalls
+//
+int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
+{
+  if (id < 1000 || id >= 1100) {
+    return 0;
+  }
+  switch(id) {
+  case 1000:  // begin_cycle
+    
+    
+
+  }
+}
+
 //#define TEST_XPRINTF
 #ifdef TEST_XPRINTF
 void test_xprintf(void)

@@ -61,6 +61,10 @@ zf_cell zf_pick(zf_addr n);
 zf_result zf_uservar_set(zf_uservar_id uv, zf_cell v);
 zf_result zf_uservar_get(zf_uservar_id uv, zf_cell *v);
 
+/* add custom_syscalls */
+/* func returns 1, if it handles id, otherwise return 0. */
+void zf_add_syscall(int (*func)(zf_syscall_id, const char *));
+
 /* Host provides these functions */
 
 zf_input_state zf_host_sys(zf_syscall_id id, const char *last_word);
