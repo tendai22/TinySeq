@@ -204,9 +204,9 @@ void do_timer(void)
 #define _X 65536
 const uint32_t _ma[32] = {
   1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 4096*2, 4096*4, 4096*8,
-  _X, 2*_X, 4*_X, 8*_X, 16*_X, 32*_X, 64*_X, 128*_X, 256*_X, 512_*X, 1024*_X, 2048*_X, 
-  4096*_X, 4096*2*_X, 4096*4*_X, 4096*8*_X
-}
+  _X, 2*_X, 4*_X, 8*_X, 16*_X, 32*_X, 64*_X, 128*_X, 256*_X, 512*_X, 1024*_X, 2048*_X, 
+  4096*_X, 4096*2*_X, 4096*4*_X, 
+};
 
 /**
  * primitives
@@ -229,14 +229,14 @@ int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
   if (id < 1000 || id >= 1100) {
     return 0;
   }
-  switch(id) {
+  switch((int)id) {
   case 1000:  // begin_cycle
   case 1001:  // tribial change   
   case 1002:  // tribial change 2   
-
+    ;
   }
+  return 0;
 }
-
 //#define TEST_XPRINTF
 #ifdef TEST_XPRINTF
 void test_xprintf(void)
