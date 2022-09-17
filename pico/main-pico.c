@@ -180,25 +180,83 @@ int32_t cur_coilport;
 int16_t rest_count[NUM_COILPORT];
 
 //
+// GPIO initialize
+//
+void io_init(void)
+{
+  gpio_init_mask(0xffff);
+  for (int i = 8; i < 16; ++i) {
+    gpio_pull_up(i);
+  }
+  gpio_clr_mask(0xff00);  // GP8-15 cleared before they are activated
+  gpio_set_dir_masked(0xffff, 0x00ff);  // GP0-7, output, GP8-15: input
+}
+
+//
+// read inport pins
+//
+int32_t get_inport(void)
+{
+  return (~gpio_get_all()) & 0xff00; // GP8-15 as X008-015
+}
+
+//
+// write to output pins
+//
+
+void put_outport(int32_t outdata)
+{
+  outdata /= 256;
+  outdata &= 0xff;
+  gpio_put_masked(0xff, outdata);
+}
+
+int32_t do_ladder(void)
+{
+  outport = cur_outport;
+  // here, a ladder cycle is executed
+  // In the ladder cycle, it refers 'inport' and and 'coilport' 
+  // and modifies 'outport' and 'coilport'.
+
+  //
+  // X008,9,10 -> Y12,13,14
+  //
+  inport <<= 4;
+  inport &= 0x7000;    // bit8,9,10
+  outport &= ~0x7000;    // clear bit 8,9,10
+  outport |= inport;
+
+  // after outport and coilport revises
+  if (cur_inport != inport)
+    printf("in: %08X\n", inport);
+  if (cur_coilport != coilport)
+    printf("coil: %08X\n", coilport);
+  return outport;
+}
+
+//
 // timer function
 //
 void do_timer(void)
 {
   int32_t mask = 1;
   // activate ON-Delay/OFF-Delay if counter becomes zero
+  coilport = cur_coilport;
   for (int i = 0; i < NUM_COILPORT; ++i, mask<<=1) {
     if (rest_count[i] > 0 && --rest_count[i] == 0) {
       // toggle coil value
-      cur_coilport ^= mask;
+      coilport ^= mask;
     }
   }
   // examine inport
-  cur_inport = get_inport();
+  inport = get_inport();
   // if any changes occur, do 'ladder' function
   if (cur_coilport != coilport || cur_inport != inport) {
-    cur_outport = do_ladder(cur_inport, cur_coilport);
+    cur_outport = do_ladder();
     put_outport(cur_outport);
   }
+  cur_coilport = coilport;
+  cur_inport = inport;
 }
 
 #define _X 65536
@@ -207,6 +265,15 @@ const uint32_t _ma[32] = {
   _X, 2*_X, 4*_X, 8*_X, 16*_X, 32*_X, 64*_X, 128*_X, 256*_X, 512*_X, 1024*_X, 2048*_X, 
   4096*_X, 4096*2*_X, 4096*4*_X, 
 };
+
+//
+// timer function
+//
+static bool repeating_timer_callback(struct repeating_timer *t)
+{
+  do_timer();
+  return true;
+}
 
 /**
  * primitives
@@ -272,6 +339,18 @@ int main(int argc, char **argv)
   con_init();
 	xdev_out(_mon_putc);
   xdev_in(_mon_getc);
+
+  io_init();
+  // alarm
+  struct repeating_timer timer;
+  add_repeating_timer_ms(-100, repeating_timer_callback, NULL, &timer);
+
+#if 0
+  while (1) {
+    do_timer();
+    sleep_ms(100);
+  }
+#endif
 
 #ifdef TEST_XPRINTF
   test_xprintf();
