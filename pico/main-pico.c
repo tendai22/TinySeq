@@ -200,6 +200,16 @@ int32_t get_inport(void)
   return (~gpio_get_all()) & 0xff00; // GP8-15 as X008-015
 }
 
+void set_outport_mask(int32_t mask)
+{
+  outport |= mask;
+}
+
+void clr_outport_mask(int32_t mask)
+{
+  outport &= ~mask;
+}
+
 //
 // write to output pins
 //
@@ -221,16 +231,17 @@ int32_t do_ladder(void)
   //
   // X008,9,10 -> Y12,13,14
   //
+#if 0
   inport <<= 4;
   inport &= 0x7000;    // bit8,9,10
   outport &= ~0x7000;    // clear bit 8,9,10
   outport |= inport;
-
+#endif
   // after outport and coilport revises
   if (cur_inport != inport)
-    printf("in: %08X\n", inport);
+    xprintf("in: %08X\n", inport);
   if (cur_coilport != coilport)
-    printf("coil: %08X\n", coilport);
+    xprintf("coil: %08X\n", coilport);
   return outport;
 }
 
@@ -254,6 +265,9 @@ void do_timer(void)
   if (cur_coilport != coilport || cur_inport != inport) {
     cur_outport = do_ladder();
     put_outport(cur_outport);
+  } else if (cur_outport != outport) {
+    put_outport(outport);
+    cur_outport = outport;
   }
   cur_coilport = coilport;
   cur_inport = inport;
@@ -294,15 +308,56 @@ static bool repeating_timer_callback(struct repeating_timer *t)
 int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
 {
   if (id < 1000 || id >= 1100) {
-    return 0;
+    return -1;
   }
+  int port, val;
+  int period;
   switch((int)id) {
   case 1000:  // begin_cycle
-  case 1001:  // tribial change   
-  case 1002:  // tribial change 2   
-    ;
+    xprintf("not supported\n");
+    break;
+  case 1001:  // val n Xnnn --> val'
+              // refer n'th bit of inport and AND-OP with val,
+              // result pushed as val'
+    port = (int)zf_pop();
+    val = (int)zf_pop();
+    if (val) {
+      zf_push((get_inport() & (1<<port) ? 1 : 0));
+    }
+    //xprintf("inport\n");
+    break;
+  case 1002:  // val n Ynnn --> val'
+              // sets val to n'th bit of outport and
+              // pushes the same value as val.
+    port = (int)zf_pop();
+    val = (int)zf_pop();
+    if (val) {  // set Ynn bit
+      set_outport_mask((1<<port));
+    } else {
+      clr_outport_mask((1<<port));
+    }
+    //xprintf("outport\n");
+    break;
+  case 1003:  // val period n Tnnn -> val'
+              // set ON-Delay timer
+    port = (int)zf_pop();
+    period = (int)zf_pop();
+    val = (int)zf_pop();
+    if (port < 0 || NUM_COILPORT <= port) {
+      xprintf("bad period %d\n", port);
+      return ZF_INPUT_INTERPRET;
+    }
+    if (rest_count[port] > 0) { // ignore this timer
+      return ZF_INPUT_INTERPRET;
+    }
+    // set timer
+    rest_count[port] = period;
+
+
+  default:
+    return -1;
   }
-  return 0;
+  return ZF_INPUT_INTERPRET;
 }
 //#define TEST_XPRINTF
 #ifdef TEST_XPRINTF
@@ -341,20 +396,22 @@ int main(int argc, char **argv)
   xdev_in(_mon_getc);
 
   io_init();
+
+  //
+  // add TinySeq syscalls
+  //
+  xprintf("before zf_add_syscall\n");
+  zf_add_syscall(tinyseq_custom_syscalls);
+  xprintf("after zf_add_syscall\n");
+
   // alarm
   struct repeating_timer timer;
   add_repeating_timer_ms(-100, repeating_timer_callback, NULL, &timer);
 
-#if 0
-  while (1) {
-    do_timer();
-    sleep_ms(100);
-  }
-#endif
-
 #ifdef TEST_XPRINTF
   test_xprintf();
 #endif //XPRINTF_TEST
+
 
   zf_main(argc, argv);
   xprintf("end of zf_main\n");
@@ -385,7 +442,7 @@ int main() {
 int main(){
   int c;
   con_init();
-  printf("hello, world!\n");
+  xprintf("hello, world!\n");
   while (1) {
     while ((c = _mon_getc()) == -1);
     _mon_putc(c);
