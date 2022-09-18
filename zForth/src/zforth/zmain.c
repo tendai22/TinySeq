@@ -117,7 +117,6 @@ static int (*custom_func)(zf_syscall_id, const char *) = NULL;
 
 void zf_add_syscall(int (*func)(zf_syscall_id, const char *))
 {
-	xprintf("zf_add_syscall\n");
 	custom_func = func;
 }
 

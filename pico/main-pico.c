@@ -165,10 +165,15 @@ int zf_getline(char *buf, int siz)
 //
 // bit value holding IN/OUT port
 //
+// In zFlash functions, or tinyseq system calls, inport/outport/coilport are changed.
+// In the next do_timer function invokation, these changes to get effect.
 int32_t inport;
 int32_t outport;
 int32_t coilport;
 
+// current(previous) port bit holders
+// In 'do_timer' function, if either of inport, outport, coilport is different to
+// its corrspoinding 'cur_' value, actual output pins are switched.
 int32_t cur_inport;
 int32_t cur_outport;
 int32_t cur_coilport;
@@ -200,6 +205,11 @@ int32_t get_inport(void)
   return (~gpio_get_all()) & 0xff00; // GP8-15 as X008-015
 }
 
+int32_t get_coilport(void)
+{
+  return (cur_coilport) & 0xff00; // GP8-15 as X008-015
+}
+
 void set_outport_mask(int32_t mask)
 {
   outport |= mask;
@@ -208,6 +218,16 @@ void set_outport_mask(int32_t mask)
 void clr_outport_mask(int32_t mask)
 {
   outport &= ~mask;
+}
+
+void set_coilport_mask(int32_t mask)
+{
+  coilport |= mask;
+}
+
+void clr_coilport_mask(int32_t mask)
+{
+  coilport &= ~mask;
 }
 
 //
@@ -223,7 +243,6 @@ void put_outport(int32_t outdata)
 
 int32_t do_ladder(void)
 {
-  outport = cur_outport;
   // here, a ladder cycle is executed
   // In the ladder cycle, it refers 'inport' and and 'coilport' 
   // and modifies 'outport' and 'coilport'.
@@ -252,11 +271,14 @@ void do_timer(void)
 {
   int32_t mask = 1;
   // activate ON-Delay/OFF-Delay if counter becomes zero
-  coilport = cur_coilport;
+  //coilport = cur_coilport;
   for (int i = 0; i < NUM_COILPORT; ++i, mask<<=1) {
-    if (rest_count[i] > 0 && --rest_count[i] == 0) {
-      // toggle coil value
-      coilport ^= mask;
+    if (rest_count[i] > 0) {
+      xprintf("coil[%d] %d\n", i, rest_count[i]);
+      if (--rest_count[i] == 0) {
+        // toggle coil value
+        coilport ^= mask;
+      }
     }
   }
   // examine inport
@@ -293,12 +315,14 @@ static bool repeating_timer_callback(struct repeating_timer *t)
  * primitives
  * L
  * --
- * Xnnn
- * Mnnn
- * Ynnn
- * !Xnnn
- * !Mnnn
- * !Ynnn
+ * Xnnn.a ... val nnn 1001 sys --> val' // refer Xnnn.a (inport) contact
+ * Xnnn.b ... val nnn 1002 sys --> val' // refer Xnnn.b (inport) contact(negate switch)
+ * Mnnn.a ... val nnn 1003 sys --> val' // refer Mnnn.a (internal) contact
+ * Mnnn.b ... val nnn 1004 sys --> val' // refer Mnnn.b (internal) contact
+ * Ynnn ... val nnn 1005 sys --> val    // set Ynnn(outport) coil
+ * Mnnn ... val nnn 1006 sys --> val    // set Mnnn(internal) coil
+ * Nnnn ... val delay nnn 1007 sys --> val    // set ON-Delay coil
+ * Fnnn ... val delay nnn 1008 sys --> val    // set OFF-Delay coil
  * 
  */ 
 
@@ -316,17 +340,32 @@ int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
   case 1000:  // begin_cycle
     xprintf("not supported\n");
     break;
-  case 1001:  // val n Xnnn --> val'
+  case 1001:  // val n Xnnn.a --> val'
+  case 1002:  // val n Xnnn.b --> val'
               // refer n'th bit of inport and AND-OP with val,
               // result pushed as val'
     port = (int)zf_pop();
     val = (int)zf_pop();
     if (val) {
-      zf_push((get_inport() & (1<<port) ? 1 : 0));
+      val = (get_inport() & (1<<port) ? 1 : 0);
+      if ((int)id == 1002)
+        val = val ? 0 : 1;
+      zf_push(val);
     }
     //xprintf("inport\n");
     break;
-  case 1002:  // val n Ynnn --> val'
+  case 1003:  // val n Mnnn.a --> val'
+  case 1004:  // val n Mnnn.b --> val'
+    port = (int)zf_pop();
+    val = (int)zf_pop();
+    if (val) {
+      val = (get_coilport() & (1<<port) ? 1 : 0);
+      if ((int)id == 1004)
+        val = val ? 0 : 1;
+      zf_push(val);
+    }
+    break;
+  case 1005:  // val n Ynnn --> val'
               // sets val to n'th bit of outport and
               // pushes the same value as val.
     port = (int)zf_pop();
@@ -338,7 +377,21 @@ int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
     }
     //xprintf("outport\n");
     break;
-  case 1003:  // val period n Tnnn -> val'
+  case 1006:  // val n Mnnn --> val'
+              // sets val to n'th bit of coilport and
+              // pushes the same value as val.
+    port = (int)zf_pop();
+    val = (int)zf_pop();
+    if (val) {  // set Ynn bit
+      set_coilport_mask((1<<port));
+    } else {
+      clr_coilport_mask((1<<port));
+    }
+    //xprintf("outport\n");
+    break;
+  case 1007:  // OFF-DELAY Timer
+  case 1008:  // ON-DELAY Timer
+              // val period n Tnnn -> val'
               // set ON-Delay timer
     port = (int)zf_pop();
     period = (int)zf_pop();
@@ -350,10 +403,18 @@ int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
     if (rest_count[port] > 0) { // ignore this timer
       return ZF_INPUT_INTERPRET;
     }
-    // set timer
+    // set timer, if value > 0
+    if (val == 0) {
+      return ZF_INPUT_INTERPRET;  // do nothing if val is zero
+    }
     rest_count[port] = period;
-
-
+    if ((int)id == 1007) {  // ON-DELAY, initial value should be zero
+      clr_coilport_mask(1<<port);
+    }
+    if ((int)id == 1008) {  // OFF-DELAY, set one
+      set_coilport_mask(1<<port);
+    }
+    break;
   default:
     return -1;
   }
@@ -400,9 +461,7 @@ int main(int argc, char **argv)
   //
   // add TinySeq syscalls
   //
-  xprintf("before zf_add_syscall\n");
   zf_add_syscall(tinyseq_custom_syscalls);
-  xprintf("after zf_add_syscall\n");
 
   // alarm
   struct repeating_timer timer;
