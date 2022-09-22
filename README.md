@@ -7,8 +7,8 @@ TinySeqは PIC32MX, ATmega386, Raspberry Pi Picoを用いて簡易シーケン�
 シーケンサが実行する「プログラム」(ラダーと言います)をテキストとして記述し、シリアルポートから流し込めば実行開始できます。
 
 テキスト形式で簡単な言語を解釈実行でき、かつコンパクトに実現するために、FORTHインタプリタをベースにしました。
-`zForth`(https://github.com/zevv/zForth)をベースとし、システムコールとしてプリミティブを拡張する機能を用いてラダーを構成する部品を実現しています。
-独自のprintf関数(Chanさんのxprintf)を持ち、コードが不用意に膨らまないように配慮しました。
+[`zForth`](https://github.com/zevv/zForth)をベースとし、システムコール(プリミティブを拡張する機能)を用いてラダーを構成する部品を追加で実装しています。
+独自のprintf関数(Chanさんの[xprintf](http://elm-chan.org/fsw/strf/xprintf_j.html))を持ち、コードが不用意に膨らまないように配慮しました。
 
 ## シーケンサとは何か
 

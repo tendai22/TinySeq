@@ -31,6 +31,7 @@ typedef enum {
 	ZF_SYSCALL_EMIT,
 	ZF_SYSCALL_PRINT,
 	ZF_SYSCALL_TELL,
+	ZF_SYSCALL_QUIT = 128,
 	ZF_SYSCALL_USER = 2000
 	// If we need to use any bigger number than 255,
 	// we specify any of 2byte integer here

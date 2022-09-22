@@ -149,7 +149,7 @@ zf_input_state zf_host_sys(zf_syscall_id id, const char *input)
 			break;
 		/* Application specific callbacks */
 
-		case ZF_SYSCALL_USER + 0:
+		case ZF_SYSCALL_QUIT:
 			xprintf("\r\n");
 			exit(0);
 			break;
