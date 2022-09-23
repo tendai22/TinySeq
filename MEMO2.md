@@ -160,7 +160,13 @@ allot:     n ---
 
   ユーザ変数HEREの値にnを足す。
 
-var:
+var:  var cccc ---
+
+  変数ccccを定義する。ユーザ変数とは別の場所にあるようだ。一旦定義すると、
+
+  cccc:    --- addr
+
+  変数のアドレスを返し、!で書き込み、@ で読み出しができるようになる。
 
 ```
 : var : ' lit , here 5 allot here swap ! 5 allot postpone ; ;
@@ -184,6 +190,9 @@ lit:     --- cell
 
   PRIM_LIT, コンパイル中に書く。IP(インストラクションポインタ)が指すものを取り出し
   プッシュする。
+
+':
+  PRIM_TICK, 
 
 # dict
 
