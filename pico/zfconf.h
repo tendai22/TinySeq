@@ -57,8 +57,8 @@ typedef uint32_t zf_addr;
  * number of elements of type zf_cell */
 
 #define ZF_DICT_SIZE 4096
-#define ZF_DSTACK_SIZE 32
-#define ZF_RSTACK_SIZE 32
+#define ZF_DSTACK_SIZE 64
+#define ZF_RSTACK_SIZE 64
 
 /* use Chan-san's xprintf family functions */
 #define USE_XPRINTF

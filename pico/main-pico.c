@@ -53,6 +53,32 @@
 #include "pico/stdlib.h"
 
 extern int zmain(int argc, char **argv);
+static void do_timer(void);
+//
+// status_flag:  to tell zForth 'ladder' word to be invoked.
+// for every timer activation, and check if any of inport/coilport changes occur,
+// if any changes occur, status_flag to be set.
+// IN zForth interpreter, its getchar(_mon_get()) function polls this flag
+// and when it occurs, it returns with -1 so that its interpreter can call
+// a 'laddter' word.
+//
+static int status_flag = 0;
+
+int get_statusflag(void)
+{
+  return status_flag;
+}
+
+void set_statusflag(int val)
+{
+  status_flag = val;
+}
+
+void clear_statusflag(void)
+{
+  status_flag = 0;
+}
+
 
 //
 // machine dependent uart console functions
@@ -124,8 +150,13 @@ void con_init(void)
 int _mon_getc(void)
 {
   char c;
-  while (tud_cdc_available() == 0)
-    ;
+  while (tud_cdc_available() == 0) {
+    if (get_statusflag()) {
+      do_ladder();
+      clear_statusflag();
+    }
+    sleep_ms(2);
+  }
   tud_cdc_read(&c, 1);
   return c;
 }
@@ -207,7 +238,7 @@ int32_t get_inport(void)
 
 int32_t get_coilport(void)
 {
-  return (cur_coilport) & 0xff00; // GP8-15 as X008-015
+  return (coilport) & 0xffff; // M000-M016
 }
 
 void set_outport_mask(int32_t mask)
@@ -230,6 +261,7 @@ void clr_coilport_mask(int32_t mask)
   coilport &= ~mask;
 }
 
+
 //
 // write to output pins
 //
@@ -241,7 +273,33 @@ void put_outport(int32_t outdata)
   gpio_put_masked(0xff, outdata);
 }
 
-int32_t do_ladder(void)
+//
+// timer function
+//
+#define TIMER_PERIOD 100  // 100ms
+
+static uint32_t seq_tick = TIMER_PERIOD;
+static uint32_t seq_clock = 0;
+
+uint32_t get_seq_clock(void)
+{
+  return seq_clock;
+}
+
+static bool repeating_timer_callback(struct repeating_timer *t)
+{
+  if (--seq_tick <= 0) {
+    do_timer();
+    seq_tick = TIMER_PERIOD;
+  }
+  seq_clock++;
+  return true;
+}
+#if 0
+//
+// do_ladder, now move to 'zmain.c'
+//
+void do_ladder(void)
 {
   // here, a ladder cycle is executed
   // In the ladder cycle, it refers 'inport' and and 'coilport' 
@@ -261,9 +319,9 @@ int32_t do_ladder(void)
     xprintf("in: %08X\n", inport);
   if (cur_coilport != coilport)
     xprintf("coil: %08X\n", coilport);
-  return outport;
+  //return outport;
 }
-
+#endif
 //
 // timer function
 //
@@ -285,12 +343,15 @@ void do_timer(void)
   inport = get_inport();
   // if any changes occur, do 'ladder' function
   if (cur_coilport != coilport || cur_inport != inport) {
-    cur_outport = do_ladder();
-    put_outport(cur_outport);
-  } else if (cur_outport != outport) {
-    put_outport(outport);
-    cur_outport = outport;
+    xprintf("%ld: changed\n", get_seq_clock());
+    set_statusflag(1); // activate do_ladder
   }
+}
+
+void post_ladder(void)
+{
+  put_outport(outport);
+  cur_outport = outport;
   cur_coilport = coilport;
   cur_inport = inport;
 }
@@ -302,14 +363,6 @@ const uint32_t _ma[32] = {
   4096*_X, 4096*2*_X, 4096*4*_X, 
 };
 
-//
-// timer function
-//
-static bool repeating_timer_callback(struct repeating_timer *t)
-{
-  do_timer();
-  return true;
-}
 
 /**
  * primitives
@@ -465,7 +518,7 @@ int main(int argc, char **argv)
 
   // alarm
   struct repeating_timer timer;
-  add_repeating_timer_ms(-100, repeating_timer_callback, NULL, &timer);
+  add_repeating_timer_us(-1000, repeating_timer_callback, NULL, &timer);
 
 #ifdef TEST_XPRINTF
   test_xprintf();

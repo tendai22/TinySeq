@@ -5,3 +5,4 @@ go
 *.swo
 zforth.save
 .zforth.hist
+.DS_Store

@@ -93,7 +93,7 @@ static jmp_buf jmpbuf;
 #define POSTPONE  uservar[ZF_USERVAR_POSTPONE]  /* flag to indicate next imm word should be compiled */
 
 static const char uservar_names[] =
-	_("h")   _("latest") _("trace")  _("compiling")  _("_postpone");
+	_("h")   _("latest") _("trace")  _("compiling")  _("_postpone") _("_ladder");
 
 static zf_addr *uservar = (zf_addr *)dict;
 

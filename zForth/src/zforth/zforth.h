@@ -43,7 +43,7 @@ typedef enum {
     ZF_USERVAR_TRACE,
     ZF_USERVAR_COMPILING,
     ZF_USERVAR_POSTPONE,
-
+	ZF_USERVAR_LADDER,	// ladder word for TinySeq
     ZF_USERVAR_COUNT
 } zf_uservar_id;
 
@@ -85,5 +85,7 @@ extern void yprintf(const char *fmt, ...);
 extern zf_result do_eval(const char *src, int line, const char *buf);
 extern int zf_main(int argc, char **argv);
 
+/* TinySeq oriented functions */
+extern void do_ladder(void);
 
 #endif

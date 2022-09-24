@@ -177,7 +177,25 @@ zf_input_state zf_host_sys(zf_syscall_id id, const char *input)
 	return ZF_INPUT_INTERPRET;
 }
 
+extern void post_ladder(void);
 
+/*
+ * do_ladder ... execute 'ladder' word
+ */
+void do_ladder(void)
+{
+	int res;
+	uint32_t start;
+	extern uint32_t get_seq_clock();
+	start = get_seq_clock();
+	res = zf_eval("ladder ");
+	post_ladder();
+	if (res == ZF_OK) {
+		xprintf("%ld -> %ld\n", start, get_seq_clock());
+	} else {
+		xprintf("err = %d\n", res);
+	}
+}
 /*
  * Tracing output
  */
