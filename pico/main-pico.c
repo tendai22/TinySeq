@@ -182,7 +182,10 @@ void _mon_putc2(int c)
 
 int zf_getline(char *buf, int siz)
 {
-  xgets(buf, siz);
+  zf_cell cell;
+  zf_uservar_get(ZF_USERVAR_NOECHO, &cell);
+  int noecho = cell;
+  xgets(buf, siz, noecho);
   return strlen(buf);
 }
 
@@ -346,6 +349,26 @@ void do_timer(void)
     xprintf("%ld: changed\n", get_seq_clock());
     set_statusflag(1); // activate do_ladder
   }
+}
+
+extern void post_ladder(void);
+
+/*
+ * do_ladder ... execute 'ladder' word
+ */
+void do_ladder(void)
+{
+	int res;
+	uint32_t start;
+	extern uint32_t get_seq_clock();
+	start = get_seq_clock();
+	res = zf_eval("ladder ");
+	post_ladder();
+	if (res == ZF_OK) {
+		xprintf("%ld -> %ld\n", start, get_seq_clock());
+	} else {
+		xprintf("err = %d\n", res);
+	}
 }
 
 void post_ladder(void)

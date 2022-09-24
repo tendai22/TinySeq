@@ -1,3 +1,4 @@
+1 _noecho !
 : X008.a  8 1001 sys ;
 : X009.a  9 1001 sys ;
 : X010.a 10 1001 sys ;
@@ -58,3 +59,4 @@ var |1
 : -|1- -|1 |1- ;
 : init 0 |1 ! ;
 ." Welcome to TinySeq " here . ." bytes" cr
+0 _noecho !

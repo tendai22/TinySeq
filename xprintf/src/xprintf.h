@@ -41,7 +41,7 @@ void put_dump (const void* buff, unsigned long addr, int len, size_t width);
 #if XF_USE_INPUT
 #define xdev_in(func) xfunc_input = (int(*)(void))(func)
 extern int (*xfunc_input)(void);
-int xgets (char* buff, int len);
+int xgets (char* buff, int len, int noecho);
 int xatoi (const char** str, int32_t* res);
 int xatof (char** str, double* res);
 #endif

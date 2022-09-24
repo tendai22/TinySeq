@@ -483,13 +483,15 @@ int (*xfunc_input)(void);	/* Pointer to the default input stream */
 
 int xgets (			/* 0:End of stream, 1:A line arrived */
 	char* buff,		/* Pointer to the buffer */
-	int len			/* Buffer length */
+	int len,		/* Buffer length */
+	int noecho		/* If true, avoid input echo */
 )
 {
 	int c, i;
 
 
 	if (!xfunc_input) return 0;	/* No input function is specified */
+	noecho |= !XF_INPUT_ECHO;
 
 	i = 0;
 	for (;;) {
@@ -497,15 +499,15 @@ int xgets (			/* 0:End of stream, 1:A line arrived */
 		if (c < 0 || c == '\r') break;	/* End of stream or CR? */
 		if (c == '\b' && i) {		/* BS? */
 			i--;
-			if (XF_INPUT_ECHO) { xputc(c); xputc(' '); xputc(c); }
+			if (!noecho) { xputc(c); xputc(' '); xputc(c); }
 			continue;
 		}
 		if (c >= ' ' && i < len - 1) {	/* Visible chars? */
 			buff[i++] = c;
-			if (XF_INPUT_ECHO) xputc(c);
+			if (!noecho) xputc(c);
 		}
 	}
-	if (XF_INPUT_ECHO) {
+	if (!noecho) {
 		xputc('\r');
 		xputc('\n');
 	}

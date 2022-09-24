@@ -43,7 +43,7 @@ typedef enum {
     ZF_USERVAR_TRACE,
     ZF_USERVAR_COMPILING,
     ZF_USERVAR_POSTPONE,
-	ZF_USERVAR_LADDER,	// ladder word for TinySeq
+	ZF_USERVAR_NOECHO,	// no echo-back in interactive getline function
     ZF_USERVAR_COUNT
 } zf_uservar_id;
 
