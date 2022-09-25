@@ -36,6 +36,7 @@
 #include <inttypes.h>
 
 #include "zforth.h"
+#include "tinyseq.h"
 
 #ifdef USE_STDIO
 #include <stdio.h>
@@ -53,32 +54,7 @@
 #include "pico/stdlib.h"
 
 extern int zmain(int argc, char **argv);
-static void do_timer(void);
-//
-// status_flag:  to tell zForth 'ladder' word to be invoked.
-// for every timer activation, and check if any of inport/coilport changes occur,
-// if any changes occur, status_flag to be set.
-// IN zForth interpreter, its getchar(_mon_get()) function polls this flag
-// and when it occurs, it returns with -1 so that its interpreter can call
-// a 'laddter' word.
-//
-static int status_flag = 0;
-
-int get_statusflag(void)
-{
-  return status_flag;
-}
-
-void set_statusflag(int val)
-{
-  status_flag = val;
-}
-
-void clear_statusflag(void)
-{
-  status_flag = 0;
-}
-
+//static void do_timer(void);
 
 //
 // machine dependent uart console functions
@@ -189,6 +165,7 @@ int zf_getline(char *buf, int siz)
   return strlen(buf);
 }
 
+#if 0
 //
 // PLC module
 //
@@ -211,12 +188,7 @@ int32_t coilport;
 int32_t cur_inport;
 int32_t cur_outport;
 int32_t cur_coilport;
-
-//
-// rest timer count for COIL, which counts remaining count number for fire
-// (ON-Delay or OFF-Delay), actially toggle (EX-OR) its value.
-//
-int16_t rest_count[NUM_COILPORT];
+#endif
 
 //
 // GPIO initialize
@@ -231,6 +203,27 @@ void io_init(void)
   gpio_set_dir_masked(0xffff, 0x00ff);  // GP0-7, output, GP8-15: input
 }
 
+//
+// bit array to/from gpio, machine dependent, defined in each
+// platform.
+//
+
+
+void put_outbits(const uint8_t *bits)
+{
+  // Y008-015 bit24-32 -> GP0-GP7
+  uint32_t outport;
+  outport = bits[3];
+  gpio_put_masked(0xff, outport);
+}
+
+void get_inbits(uint8_t *bits)
+{
+  // GP8-15 bit8-15 --> X008-015
+  bits[1] = ((~gpio_get_all())>>8);
+}
+
+#if 0
 //
 // read inport pins
 //
@@ -275,6 +268,7 @@ void put_outport(int32_t outdata)
   outdata &= 0xff;
   gpio_put_masked(0xff, outdata);
 }
+#endif
 
 //
 // timer function
@@ -298,94 +292,6 @@ static bool repeating_timer_callback(struct repeating_timer *t)
   seq_clock++;
   return true;
 }
-#if 0
-//
-// do_ladder, now move to 'zmain.c'
-//
-void do_ladder(void)
-{
-  // here, a ladder cycle is executed
-  // In the ladder cycle, it refers 'inport' and and 'coilport' 
-  // and modifies 'outport' and 'coilport'.
-
-  //
-  // X008,9,10 -> Y12,13,14
-  //
-#if 0
-  inport <<= 4;
-  inport &= 0x7000;    // bit8,9,10
-  outport &= ~0x7000;    // clear bit 8,9,10
-  outport |= inport;
-#endif
-  // after outport and coilport revises
-  if (cur_inport != inport)
-    xprintf("in: %08X\n", inport);
-  if (cur_coilport != coilport)
-    xprintf("coil: %08X\n", coilport);
-  //return outport;
-}
-#endif
-//
-// timer function
-//
-void do_timer(void)
-{
-  int32_t mask = 1;
-  // activate ON-Delay/OFF-Delay if counter becomes zero
-  //coilport = cur_coilport;
-  for (int i = 0; i < NUM_COILPORT; ++i, mask<<=1) {
-    if (rest_count[i] > 0) {
-      xprintf("coil[%d] %d\n", i, rest_count[i]);
-      if (--rest_count[i] == 0) {
-        // toggle coil value
-        coilport ^= mask;
-      }
-    }
-  }
-  // examine inport
-  inport = get_inport();
-  // if any changes occur, do 'ladder' function
-  if (cur_coilport != coilport || cur_inport != inport) {
-    xprintf("%ld: changed\n", get_seq_clock());
-    set_statusflag(1); // activate do_ladder
-  }
-}
-
-extern void post_ladder(void);
-
-/*
- * do_ladder ... execute 'ladder' word
- */
-void do_ladder(void)
-{
-	int res;
-	uint32_t start;
-	extern uint32_t get_seq_clock();
-	start = get_seq_clock();
-	res = zf_eval("ladder ");
-	post_ladder();
-	if (res == ZF_OK) {
-		xprintf("%ld -> %ld\n", start, get_seq_clock());
-	} else {
-		xprintf("err = %d\n", res);
-	}
-}
-
-void post_ladder(void)
-{
-  put_outport(outport);
-  cur_outport = outport;
-  cur_coilport = coilport;
-  cur_inport = inport;
-}
-
-#define _X 65536
-const uint32_t _ma[32] = {
-  1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 4096*2, 4096*4, 4096*8,
-  _X, 2*_X, 4*_X, 8*_X, 16*_X, 32*_X, 64*_X, 128*_X, 256*_X, 512*_X, 1024*_X, 2048*_X, 
-  4096*_X, 4096*2*_X, 4096*4*_X, 
-};
-
 
 /**
  * primitives
@@ -401,7 +307,7 @@ const uint32_t _ma[32] = {
  * Fnnn ... val delay nnn 1008 sys --> val    // set OFF-Delay coil
  * 
  */ 
-
+#if 0
 //
 // custom syscalls
 //
@@ -496,6 +402,8 @@ int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
   }
   return ZF_INPUT_INTERPRET;
 }
+#endif
+
 //#define TEST_XPRINTF
 #ifdef TEST_XPRINTF
 void test_xprintf(void)
@@ -537,7 +445,7 @@ int main(int argc, char **argv)
   //
   // add TinySeq syscalls
   //
-  zf_add_syscall(tinyseq_custom_syscalls);
+  init_tinyseq();
 
   // alarm
   struct repeating_timer timer;

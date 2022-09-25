@@ -28,6 +28,7 @@ add_compile_options(-Wall
 
 add_executable(tinyseq
         ./main-pico.c
+        ../tinyseq/tinyseq.c
         ../zForth/src/zforth/zforth.c
         ../zForth/src/zforth/zmain.c
         ../zForth/forth/core.c
@@ -40,6 +41,7 @@ target_compile_options(tinyseq
 
 target_include_directories(tinyseq
         PUBLIC . ../zForth/src/zforth
+        ../tinyseq/
         ../zForth/src/pico
         ../xprintf/src
         )

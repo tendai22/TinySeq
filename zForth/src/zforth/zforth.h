@@ -1,6 +1,6 @@
 #ifndef zforth_h
 #define zforth_h
-
+#include <stdarg.h>
 #include "zfconf.h"
 
 /* Abort reasons */
@@ -21,21 +21,13 @@ typedef enum {
 	ZF_ABORT_EXTERNAL
 } zf_result;
 
+
 typedef enum {
 	ZF_INPUT_INTERPRET,
 	ZF_INPUT_PASS_CHAR,
 	ZF_INPUT_PASS_WORD
 } zf_input_state;
 
-typedef enum {
-	ZF_SYSCALL_EMIT,
-	ZF_SYSCALL_PRINT,
-	ZF_SYSCALL_TELL,
-	ZF_SYSCALL_QUIT = 128,
-	ZF_SYSCALL_USER = 2000
-	// If we need to use any bigger number than 255,
-	// we specify any of 2byte integer here
-} zf_syscall_id;
 
 typedef enum {
     ZF_USERVAR_HERE = 0,
@@ -47,9 +39,17 @@ typedef enum {
     ZF_USERVAR_COUNT
 } zf_uservar_id;
 
-
 /* ZForth API functions */
 
+typedef enum {
+	ZF_SYSCALL_EMIT,
+	ZF_SYSCALL_PRINT,
+	ZF_SYSCALL_TELL,
+	ZF_SYSCALL_QUIT,
+	ZF_SYSCALL_USER = 128
+	// If we need to use any bigger number than 255,
+	// we specify any of 2byte integer here
+} zf_syscall_id;
 
 void zf_init(int trace);
 void zf_bootstrap(void);

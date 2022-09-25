@@ -1,12 +1,22 @@
-1 _noecho !
-: X008.a  8 1001 sys ;
-: X009.a  9 1001 sys ;
-: X010.a 10 1001 sys ;
-: X011.a 11 1001 sys ;
-: X012.a 12 1001 sys ;
-: X013.a 13 1001 sys ;
-: X014.a 14 1001 sys ;
-: X015.a 15 1001 sys ;
+( 1 _noecho ! )
+128 const _SYSCALL_USER
+_SYSCALL_USER 1 + const _GET_BIT
+_SYSCALL_USER 2 + const _SET_BIT
+_SYSCALL_USER 3 + const _SET_ONDELAY
+_SYSCALL_USER 4 + const _SET_OFFDELAY
+ 0 const _X_OFFSET
+16 const _Y_OFFSET
+32 const _M_OFFSET
+48 const _N_OFFSET
+56 const _F_OFFSET
+: X008.a  8 _X_OFFSET + _GET_BIT sys ;
+: X009.a  9 _X_OFFSET + _GET_BIT sys ;
+: X010.a 10 _X_OFFSET + _GET_BIT sys ;
+: X011.a 11 _X_OFFSET + _GET_BIT sys ;
+: X012.a 12 _X_OFFSET + _GET_BIT sys ;
+: X013.a 13 _X_OFFSET + _GET_BIT sys ;
+: X014.a 14 _X_OFFSET + _GET_BIT sys ;
+: X015.a 15 _X_OFFSET + _GET_BIT sys ;
 : X008.b  X008.a not ;
 : X009.b  X009.a not ;
 : X010.b  X010.a not ;
@@ -15,14 +25,14 @@
 : X013.b  X013.a not ;
 : X014.b  X014.a not ;
 : X015.b  X015.a not ;
-: M000.a  0 1003 sys ;
-: M001.a  1 1003 sys ;
-: M002.a  2 1003 sys ;
-: M003.a  3 1003 sys ;
-: M004.a  4 1003 sys ;
-: M005.a  5 1003 sys ;
-: M006.a  6 1003 sys ;
-: M007.a  7 1003 sys ;
+: M000.a  0 _M_OFFSET + _GET_BIT sys ;
+: M001.a  1 _M_OFFSET + _GET_BIT sys ;
+: M002.a  2 _M_OFFSET + _GET_BIT sys ;
+: M003.a  3 _M_OFFSET + _GET_BIT sys ;
+: M004.a  4 _M_OFFSET + _GET_BIT sys ;
+: M005.a  5 _M_OFFSET + _GET_BIT sys ;
+: M006.a  6 _M_OFFSET + _GET_BIT sys ;
+: M007.a  7 _M_OFFSET + _GET_BIT sys ;
 : M000.b  M000.a not ;
 : M001.b  M001.a not ;
 : M002.b  M002.a not ;
@@ -31,22 +41,22 @@
 : M005.b  M005.a not ;
 : M006.b  M006.a not ;
 : M007.b  M007.a not ;
-: M000    dup 0 1006 sys ;
-: M001    dup 1 1006 sys ;
-: M002    dup 2 1006 sys ;
-: M003    dup 3 1006 sys ;
-: M004    dup 4 1006 sys ;
-: M005    dup 5 1006 sys ;
-: M006    dup 6 1006 sys ;
-: M007    dup 7 1006 sys ;
-: Y008    dup 8 1005 sys ;
-: Y009    dup 9 1005 sys ;
-: Y010    dup 10 1005 sys ;
-: Y011    dup 11 1005 sys ;
-: Y012    dup 12 1005 sys ;
-: Y013    dup 13 1005 sys ;
-: Y014    dup 14 1005 sys ;
-: Y015    dup 15 1005 sys ;
+: M000     0 _M_OFFSET + _SET_BIT sys ;
+: M001     1 _M_OFFSET + _GET_BIT sys ;
+: M002     2 _M_OFFSET + _GET_BIT sys ;
+: M003     3 _M_OFFSET + _GET_BIT sys ;
+: M004     4 _M_OFFSET + _GET_BIT sys ;
+: M005     5 _M_OFFSET + _GET_BIT sys ;
+: M006     6 _M_OFFSET + _GET_BIT sys ;
+: M007     7 _M_OFFSET + _GET_BIT sys ;
+: Y008     8 _Y_OFFSET + _GET_BIT sys ;
+: Y009     9 _Y_OFFSET + _GET_BIT sys ;
+: Y010    10 _Y_OFFSET + _GET_BIT sys ;
+: Y011    11 _Y_OFFSET + _GET_BIT sys ;
+: Y012    12 _Y_OFFSET + _GET_BIT sys ;
+: Y013    13 _Y_OFFSET + _GET_BIT sys ;
+: Y014    14 _Y_OFFSET + _GET_BIT sys ;
+: Y015    15 _Y_OFFSET + _GET_BIT sys ;
 : |- ( --- 1) 1 ;
 : |--         1 ;
 : --- ;
