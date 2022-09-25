@@ -1,9 +1,9 @@
 ( 1 _noecho ! )
 128 const _SYSCALL_USER
-_SYSCALL_USER 1 + const _GET_BIT
-_SYSCALL_USER 2 + const _SET_BIT
-_SYSCALL_USER 3 + const _SET_ONDELAY
-_SYSCALL_USER 4 + const _SET_OFFDELAY
+_SYSCALL_USER 2 + const _GET_BIT
+_SYSCALL_USER 3 + const _SET_BIT
+_SYSCALL_USER 4 + const _SET_ONDELAY
+_SYSCALL_USER 5 + const _SET_OFFDELAY
  0 const _X_OFFSET
 16 const _Y_OFFSET
 32 const _M_OFFSET
@@ -42,21 +42,21 @@ _SYSCALL_USER 4 + const _SET_OFFDELAY
 : M006.b  M006.a not ;
 : M007.b  M007.a not ;
 : M000     0 _M_OFFSET + _SET_BIT sys ;
-: M001     1 _M_OFFSET + _GET_BIT sys ;
-: M002     2 _M_OFFSET + _GET_BIT sys ;
-: M003     3 _M_OFFSET + _GET_BIT sys ;
-: M004     4 _M_OFFSET + _GET_BIT sys ;
-: M005     5 _M_OFFSET + _GET_BIT sys ;
-: M006     6 _M_OFFSET + _GET_BIT sys ;
-: M007     7 _M_OFFSET + _GET_BIT sys ;
-: Y008     8 _Y_OFFSET + _GET_BIT sys ;
-: Y009     9 _Y_OFFSET + _GET_BIT sys ;
-: Y010    10 _Y_OFFSET + _GET_BIT sys ;
-: Y011    11 _Y_OFFSET + _GET_BIT sys ;
-: Y012    12 _Y_OFFSET + _GET_BIT sys ;
-: Y013    13 _Y_OFFSET + _GET_BIT sys ;
-: Y014    14 _Y_OFFSET + _GET_BIT sys ;
-: Y015    15 _Y_OFFSET + _GET_BIT sys ;
+: M001     1 _M_OFFSET + _SET_BIT sys ;
+: M002     2 _M_OFFSET + _SET_BIT sys ;
+: M003     3 _M_OFFSET + _SET_BIT sys ;
+: M004     4 _M_OFFSET + _SET_BIT sys ;
+: M005     5 _M_OFFSET + _SET_BIT sys ;
+: M006     6 _M_OFFSET + _SET_BIT sys ;
+: M007     7 _M_OFFSET + _SET_BIT sys ;
+: Y008     8 _Y_OFFSET + _SET_BIT sys ;
+: Y009     9 _Y_OFFSET + _SET_BIT sys ;
+: Y010    10 _Y_OFFSET + _SET_BIT sys ;
+: Y011    11 _Y_OFFSET + _SET_BIT sys ;
+: Y012    12 _Y_OFFSET + _SET_BIT sys ;
+: Y013    13 _Y_OFFSET + _SET_BIT sys ;
+: Y014    14 _Y_OFFSET + _SET_BIT sys ;
+: Y015    15 _Y_OFFSET + _SET_BIT sys ;
 : |- ( --- 1) 1 ;
 : |--         1 ;
 : --- ;
