@@ -1,9 +1,10 @@
 ( 1 _noecho ! )
 128 const _SYSCALL_USER
 _SYSCALL_USER 2 + const _GET_BIT
-_SYSCALL_USER 3 + const _SET_BIT
-_SYSCALL_USER 4 + const _SET_ONDELAY
-_SYSCALL_USER 5 + const _SET_OFFDELAY
+_SYSCALL_USER 3 + const _NEGATE_BIT
+_SYSCALL_USER 4 + const _SET_BIT
+_SYSCALL_USER 5 + const _SET_ONDELAY
+_SYSCALL_USER 6 + const _SET_OFFDELAY
  0 const _X_OFFSET
 16 const _Y_OFFSET
 32 const _M_OFFSET
@@ -17,14 +18,14 @@ _SYSCALL_USER 5 + const _SET_OFFDELAY
 : X013.a 13 _X_OFFSET + _GET_BIT sys ;
 : X014.a 14 _X_OFFSET + _GET_BIT sys ;
 : X015.a 15 _X_OFFSET + _GET_BIT sys ;
-: X008.b  X008.a not ;
-: X009.b  X009.a not ;
-: X010.b  X010.a not ;
-: X011.b  X011.a not ;
-: X012.b  X012.a not ;
-: X013.b  X013.a not ;
-: X014.b  X014.a not ;
-: X015.b  X015.a not ;
+: X008.b  8 _X_OFFSET + _NEGATE_BIT sys ;
+: X009.b  9 _X_OFFSET + _NEGATE_BIT sys ;
+: X010.b 10 _X_OFFSET + _NEGATE_BIT sys ;
+: X011.b 11 _X_OFFSET + _NEGATE_BIT sys ;
+: X012.b 12 _X_OFFSET + _NEGATE_BIT sys ;
+: X013.b 13 _X_OFFSET + _NEGATE_BIT sys ;
+: X014.b 14 _X_OFFSET + _NEGATE_BIT sys ;
+: X015.b 15 _X_OFFSET + _NEGATE_BIT sys ;
 : M000.a  0 _M_OFFSET + _GET_BIT sys ;
 : M001.a  1 _M_OFFSET + _GET_BIT sys ;
 : M002.a  2 _M_OFFSET + _GET_BIT sys ;
@@ -33,14 +34,14 @@ _SYSCALL_USER 5 + const _SET_OFFDELAY
 : M005.a  5 _M_OFFSET + _GET_BIT sys ;
 : M006.a  6 _M_OFFSET + _GET_BIT sys ;
 : M007.a  7 _M_OFFSET + _GET_BIT sys ;
-: M000.b  M000.a not ;
-: M001.b  M001.a not ;
-: M002.b  M002.a not ;
-: M003.b  M003.a not ;
-: M004.b  M004.a not ;
-: M005.b  M005.a not ;
-: M006.b  M006.a not ;
-: M007.b  M007.a not ;
+: M000.b  0 _M_OFFSET + _NEGATE_BIT sys ;
+: M001.b  1 _M_OFFSET + _NEGATE_BIT sys ;
+: M002.b  2 _M_OFFSET + _NEGATE_BIT sys ;
+: M003.b  3 _M_OFFSET + _NEGATE_BIT sys ;
+: M004.b  4 _M_OFFSET + _NEGATE_BIT sys ;
+: M005.b  5 _M_OFFSET + _NEGATE_BIT sys ;
+: M006.b  6 _M_OFFSET + _NEGATE_BIT sys ;
+: M007.b  7 _M_OFFSET + _NEGATE_BIT sys ;
 : M000     0 _M_OFFSET + _SET_BIT sys ;
 : M001     1 _M_OFFSET + _SET_BIT sys ;
 : M002     2 _M_OFFSET + _SET_BIT sys ;
@@ -63,7 +64,7 @@ _SYSCALL_USER 5 + const _SET_OFFDELAY
 : -| drop ;
 : --| drop ;
 var |1
-1 |1 !
+0 |1 !
 : -|1  |1 @ | |1 ! ;
 : |1-  |1 @ ;
 : -|1- -|1 |1- ;

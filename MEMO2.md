@@ -290,30 +290,50 @@ P24ラインを表す。1 をプッシュする。
 
 COM側単点はvalをキャンセルするだけ。
 
-
-```
-: X000.a  0 1001 sys ;
-: X001.a  1 1001 sys ;
-: X001.b  not X001.a ;
-: M000.a  0 1003 sys ;
-: M000.b  not M000.a ;
-: M000    0 1006 sys ;
-: Y000    0 1005 sys ;
-```
+## リレー、スイッチ
 
 リレーコイル、スイッチは以下のシステムコールを使う。
+(9/27更新されました)
+
+バイト配列上にスイッチ/リレー状態を1個当たり1bitで保持するようにした。
+```
+bit  0-15:  X000 - X015  Inport Switch coil
+bit 16-31:  Y000 - Y015  Outport Relay coil
+bit 32-47:  M000 - M015  Relay coil
+bit 48-55:  N000 - N007  ON-Delay relay
+bit 56-63:  F000 - F007  OFF-Delay relay
+```
+
+a接点、b接点を指定するとスイッチ(参照)を表す。b接点はNormally Off Switch(反転論理)を表す。
+
+## システムコール
+
+TinySeq用システムコールは以下のものが定義されている。
 
 ```
- * Xnnn.a ... val nnn 1001 sys --> val' // refer Xnnn.a (inport) contact
- * Xnnn.b ... val nnn 1002 sys --> val' // refer Xnnn.b (inport) contact(negate switch)
- * Mnnn.a ... val nnn 1003 sys --> val' // refer Mnnn.a (internal) contact
- * Mnnn.b ... val nnn 1004 sys --> val' // refer Mnnn.b (internal) contact
- * Ynnn ... val nnn 1005 sys --> val    // set Ynnn(outport) coil
- * Mnnn ... val nnn 1006 sys --> val    // set Mnnn(internal) coil
- * Nnnn ... val delay nnn 1007 sys --> val    // set ON-Delay coil
- * Fnnn ... val delay nnn 1008 sys --> val    // set OFF-Delay coil
+130:  val port 130 sys --> val'
+```
+a接点を表す。例えば X008.a と書く。bit 1の時、入力線の状態をそのまま出力する。bit 0の時、出力は0となる。
 
 ```
+131:  val port 131 sys --> val'
+```
+b接点を表す。例えばX008.bと書く。bit 0の時、入力線の状態をそのまま出力する。bit 1の時、出力は0となる。
+```
+132:  val port 132 sys --> val
+```
+コイルを表す。valが非ゼロの時、コイルに通電される。bit値に1が設定される。スタックにはvalがそのまま残る。
+
+```
+133:  val period port 133 sys --> val
+```
+ON-Delayタイマーを表す。valが非ゼロの時、bit値がゼロクリアされ periodで指定した時間でタイマーが発動する。タイマー発火した時点でbit値がセットされる。
+```
+134:  val period port 134 sys --> val
+```
+OFF-Delayタイマーを表す。valが非0の時、bit値がセットされ、periodで指定した時間でタイマーが発動する。タイマー発火した時点でbit値がクリアされる。
+
+## 端子点
 
 ```
 var |1     (単点全て変数として定義する)
