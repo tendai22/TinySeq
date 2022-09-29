@@ -186,21 +186,24 @@ void do_ladder(void)
 /**
  * Register Map (in 64bit array)
  * 
+ * nnn assignment:
  *  0-15:  X000-X015  Input switch
- * 16-31:  Y000-Y015  Output relay and terminals
- * 32-47:  M000-M015  Relay and terminals
- * 48-55:  N000-N007  ON-delay relay and terminals
+ * 16-31:  Y000-Y015  Output relay and contacts
+ * 32-47:  M000-M015  Relay and contacts
+ * 48-55:  N000-N007  ON-Delay relay and contacts
+ * 56-63:  F000-F007  OFF-Delay relay and contacts
  * 
- * primitives
- * Xnnn.a ... val bbb 130 sys --> val' // refer Xnnn.a, nnn = 0 - 15, bbb = 0 - 15
- * Xnnn.b ... val Xnnn.a not --> val' // refer Xnnn.b (inport) contact(negate switch)
- * Mnnn.a ... val bbb 130 sys --> val' // refer Mnnn.a nnn = 0 - 15, bbb = 32 - 47
- * Mnnn.b ... val Mnnn.a 130 sys --> val' // refer Mnnn.b, nnn = 0 - 15
- * Ynnn ... val bbb 131 sys --> val    // set Ynnn(outport) coil, nnn = 0 - 15, bbb = 16 - 31
- * Mnnn ... val bbb 131 sys --> val    // set Mnnn(internal) coil, nnn = 0 - 15, bbb = 32 - 47
- * Nnnn ... val delay bbb 132 sys --> val    // set ON-Delay coil, nnn = 0 - 7, bbb = 48 - 55
- * Fnnn ... val delay bbb 133 sys --> val    // set OFF-Delay coil, nnn = 0 - 7, bbb = 56 - 63
- * 
+ * primitives:
+ * Xnnn.a, Mnnn.a, Nnnn.a, Fnnn.a
+ *   ... val nnn 130 sys --> val' // refer Xnnn.a, nnn = 0 - 15
+ * Xnnn.b, Mnnn.b, Nnnn.b, Fnnn.b
+ *   ... val nnn 131 sys --> val' // refer Xnnn.b (inport) contact(negate switch)
+ * Ynnn, Mnnn
+ *   ... val nnn 132 sys --> val    // set nnn(outport) coil, nnn = 0 - 15
+ * Nnnn
+ *   ... val nnn 133 sys --> val    // set nnn(ON Delay) coil, nnn = 0 - 7
+ * Fnnn
+ *   ... val nnn 134 sys --> val    // set nnn(OFF Delay) coil, nnn = 0 - 7
  */ 
 
 //
@@ -208,7 +211,7 @@ void do_ladder(void)
 //
 int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
 {
-    int port, val, val1;
+    int port, val, val1, state;
     int period;
     int off_delay_flag = 1;
     int negate_switch_flag = 1;
@@ -226,12 +229,12 @@ int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
               // get bit::n
         port = (int)zf_pop();
         val = (int)zf_pop();
-        val1 = get_cur_bit(port);
+        state = get_cur_bit(port);
         if (negate_switch_flag)
-            val1 = !val1;
-        val1 = val1 && val;
-        xprintf("%d %d %d -> %d\n", val, port, ZF_SYSCALL_USER + 2, val1);
-        zf_push(val1);
+            state = !state;
+        state = state && val;
+        xprintf("%d %d %d -> %d\n", val, port, ZF_SYSCALL_USER + 2, state);
+        zf_push(state);
         //xprintf("inport\n");
         break;
     case ZF_SYSCALL_USER + 4:  // 132: set bit : val n Ynnn --> val'
@@ -255,26 +258,39 @@ int tinyseq_custom_syscalls(zf_syscall_id id, const char *input)
         port = (int)zf_pop();
         period = (int)zf_pop();
         val = (int)zf_pop();
+        state = (get_cur_bit(port) != 0);
         if (port < START_COIL || port <= (START_COIL + NUM_COIL)) {
-            xprintf("bad period %d\n", port);
+            xprintf("bad port %d\n", port);
             zf_push(val);
             return ZF_INPUT_INTERPRET;
         }
-        if (rest_count[port] > 0) { // ignore this timer
-            zf_push(val);
-            return ZF_INPUT_INTERPRET;
+        if (off_delay_flag) {
+            // OFF Delay Relay
+            if (val != 0) {
+                // cancel off-delay timer, ON forever
+                rest_count[port] = 0;
+            } else if (rest_count[port] > 0) {
+                // keep its state
+            } else if (state != 0) {
+                // set contact and start count
+                set_cur_bit(port);
+                rest_count[port] = period;
+            }
+        } else {
+            // ON Delay Relay
+            if (val == 0) {
+                // cancel ON Delay timer, OFF forever
+                rest_count[port] = 0;
+                set_cur_bit(port);
+            } else if (rest_count[port] > 0) {
+                // keep its state
+            } else if (state == 0) {
+                // reset contact
+                clr_cur_bit(port);
+                rest_count[port] = period;
+            }
         }
-        // set timer, if value > 0
-        if (val == 0) {
-            zf_push(val);
-            return ZF_INPUT_INTERPRET;  // do nothing if val is zero
-        }
-        rest_count[port] = period;
-        if (off_delay_flag) {  // OFF-DELAY, initial value should be one
-            set_cur_bit(port);
-        } else {  // ON-DELAY, set zero 
-            clr_cur_bit(port);
-        }
+        val = (get_cur_bit(port) != 0);
         zf_push(val);
         break;
     default:
