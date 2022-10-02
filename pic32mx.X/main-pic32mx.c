@@ -47,6 +47,7 @@
 // Use project enums instead of #define for ON and OFF.
 
 #include <xc.h>
+#include <sys/attribs.h>
 //#include <stdio.h>
 #include <stdarg.h>
 #include "zforth.h"
@@ -130,12 +131,12 @@ void init_uart(void)
 //
 int _mon_getc(void)
 {
-    extern int do_counter(void);
-    
+   
     while (U1STAbits.URXDA == 0) {
         // not ready
-        if (do_counter()) {
-            ;//xputc('X');//do_timer();
+        if (get_statusflag()) {
+            do_ladder();
+            clear_statusflag();
         }
         delay_us(10);
     }
@@ -336,7 +337,9 @@ uint32_t get_seq_clock(void)
 
 void init_timer(void)
 {
-    //== T1CON ===============================================
+    //
+    // use Timer1
+    //
     T1CON = 0x00000000;     //Clear
     T1CONbits.TON = 0;      //<15>Timer1_OFF
     T1CONbits.TSIDL = 1;    //<13>Stop In Idle Mode:SleepStop
@@ -356,11 +359,21 @@ void init_timer(void)
 
     TMR1 = 0;   //TMR1=0
     PR1 = (uint16_t)2000;   // 100us, possibly
+
+    INTCONbits.MVEC = 1;
+
+    IPC1bits.T1IP = 1;
     IFS0bits.T1IF = 0;
+    IEC0bits.T1IE = 1;
+    __builtin_enable_interrupts();
+//    IFS0bits.T1IF = 0;
     T1CONbits.TON = 1;    //Timer1_start
 }
 
-int do_counter(void)
+//#pragma vector do_intr 12
+//#pragma interrupt do_intr IPL1AUTO
+
+void  __ISR(_TIMER_1_VECTOR, IPL1AUTO)do_intr(void)
 {
     static uint32_t start = 0, now = 0;
     int flag = 0;
@@ -369,15 +382,15 @@ int do_counter(void)
         IFS0bits.T1IF = 0;
         usec_counter++;
         now++;
+//        set_statusflag(1);
         flag = 1;
     }
     flag = 0;
     if (now >= 10000) {   // maybe, 100ms
         now = 0;
-        do_timer();
+        xputc('x');
         flag = 1;
     }
-    return flag;
 }
 
 
