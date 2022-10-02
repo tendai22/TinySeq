@@ -2,6 +2,12 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/xprintf/src/xprintf.c</file>
+            <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/pic32mx.X/main-pic32mx.c</file>
+            <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/zForth/src/zforth/zmain.c</file>
+            <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/tinyseq/tinyseq.c</file>
+            <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/zForth/src/zforth/zforth.c</file>
+        </group>
     </open-files>
 </project-private>

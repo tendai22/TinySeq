@@ -148,7 +148,9 @@ void _mon_putc(int c)
 {
     while(U1STAbits.UTXBF)  // buffer full?
         ;
+    __builtin_disable_interrupts();
     U1TXREG = c;
+    __builtin_enable_interrupts();
 }
 
 void test_UART(void)
@@ -382,13 +384,13 @@ void  __ISR(_TIMER_1_VECTOR, IPL1AUTO)do_intr(void)
         IFS0bits.T1IF = 0;
         usec_counter++;
         now++;
-//        set_statusflag(1);
+        //set_statusflag(1);
         flag = 1;
     }
     flag = 0;
     if (now >= 10000) {   // maybe, 100ms
         now = 0;
-        xputc('x');
+        //xputc('x');
         flag = 1;
     }
 }
@@ -413,12 +415,12 @@ void main(void)
 
     delay_us(10);
     init_timer();
-	while(1){
+	while(0){
         while ((c = _mon_getc()) == -1)
             ;
         _mon_putc(c);
 	}
 
-    //zf_main (0, NULL);
+    zf_main (0, NULL);
     return;
 }
