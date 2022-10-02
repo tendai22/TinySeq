@@ -17,6 +17,7 @@
                 <sourceRootElem>../zForth/forth</sourceRootElem>
                 <sourceRootElem>../xprintf/src</sourceRootElem>
                 <sourceRootElem>../zForth/src/zforth</sourceRootElem>
+                <sourceRootElem>../tinyseq</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>

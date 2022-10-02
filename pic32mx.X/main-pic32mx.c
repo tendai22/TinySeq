@@ -51,6 +51,7 @@
 #include <stdarg.h>
 #include "zforth.h"
 #include "xprintf.h"
+#include "tinyseq.h"
 
 void delay_us(volatile unsigned int usec)        //1?sec??
 {
@@ -129,8 +130,16 @@ void init_uart(void)
 //
 int _mon_getc(void)
 {
-    if(U1STAbits.URXDA == 0)    // data ready?
-        return -1;
+    extern int do_counter(void);
+    
+    while (U1STAbits.URXDA == 0) {
+        // not ready
+        if (do_counter()) {
+            ;//xputc('X');//do_timer();
+        }
+        delay_us(10);
+    }
+    // data ready, return it
     return (char)U1RXREG;
 }
 
@@ -150,6 +159,15 @@ void test_UART(void)
             ;
         _mon_putc(c);
 	}
+}
+
+int zf_getline(char *buf, int siz)
+{
+  zf_cell cell;
+  zf_uservar_get(ZF_USERVAR_NOECHO, &cell);
+  int noecho = cell;
+  xgets(buf, siz, noecho);
+  return strlen(buf);
 }
 
 //
@@ -283,8 +301,88 @@ void test_I2C(void)
     }
 }
 
+//
+// bit array to/from gpio, machine dependent, defined in each
+// platform.
+//
+
+//
+// put_outbits: gpio output interface for tinyseq
+//
+void put_outbits(const uint8_t *bits)
+{
+    // Y000-007 bit16-23 -> portA0-7
+    mcp_write(devAdd, 0x12, bits[2]);   // MCP23017portA_Write
+}
+
+//
+// get_inbits: gpio input interface for tinyseq
+//
+void get_inbits(uint8_t *bits)
+{
+    // portB0-7 bit0-7 --> X000-007
+    bits[0] = mcp_read(devAdd, 0x13);      // MCP23017portB_Read
+}
+
+//
+// Use timer1
+//
+static uint32_t usec_counter = 0;
+
+uint32_t get_seq_clock(void)
+{
+    return usec_counter;
+}
+
+void init_timer(void)
+{
+    //== T1CON ===============================================
+    T1CON = 0x00000000;     //Clear
+    T1CONbits.TON = 0;      //<15>Timer1_OFF
+    T1CONbits.TSIDL = 1;    //<13>Stop In Idle Mode:SleepStop
+    T1CONbits.TGATE = 0;    //<7>Gated Time Accumulation is disabled
+    T1CONbits.TCKPS = 0;    //Prescale 1:1
+    T1CONbits.TCS = 0;      //ClockSource:internal clock source
+    IEC0bits.T1IE = 0;      //Interrupt:disable
+    IPC1bits.T1IP = 0;      //InterruptLevel:0
+    //== Interrupt ENABLE ===========================================
+    //INTCONbits.MVEC   = 1;      //Multi_Vector
+    //asm volatile("ei");         //Enable_Interrup
+    //== preprocessing ==============================================
+    //== while ======================================================
+    //
+    // start timer with 100us counter
+    //
+
+    TMR1 = 0;   //TMR1=0
+    PR1 = (uint16_t)2000;   // 100us, possibly
+    IFS0bits.T1IF = 0;
+    T1CONbits.TON = 1;    //Timer1_start
+}
+
+int do_counter(void)
+{
+    static uint32_t start = 0, now = 0;
+    int flag = 0;
+    // polling TIMER1
+    if (IFS0bits.T1IF) {    // maybe, 100us
+        IFS0bits.T1IF = 0;
+        usec_counter++;
+        now++;
+        flag = 1;
+    }
+    flag = 0;
+    if (now >= 10000) {   // maybe, 100ms
+        now = 0;
+        do_timer();
+        flag = 1;
+    }
+    return flag;
+}
+
+
 char *argv[] = { "zforth", NULL };
-extern int zmain(int ac, char **av);
+//extern int zmain(int ac, char **av);
 
 void main(void)
 {
@@ -292,12 +390,22 @@ void main(void)
     
 //    test_LED();
 //    test_UART();
-    init_LED();
+//    init_LED();
     init_uart();
-    led_OFF();  // MCP23017 RESET
-    delay_us(10);
-    led_ON();
+    xdev_out(_mon_putc);
+    xdev_in(_mon_getc);
+    int c;
+    init_I2C();
+    mcp_init();
 
-    zmain (0, NULL);
+    delay_us(10);
+    init_timer();
+	while(1){
+        while ((c = _mon_getc()) == -1)
+            ;
+        _mon_putc(c);
+	}
+
+    //zf_main (0, NULL);
     return;
 }

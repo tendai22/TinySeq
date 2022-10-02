@@ -17,6 +17,7 @@
       <itemPath>../xprintf/src/xprintf.c</itemPath>
       <itemPath>../zForth/src/zforth/zforth.c</itemPath>
       <itemPath>../zForth/src/zforth/zmain.c</itemPath>
+      <itemPath>../tinyseq/tinyseq.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -29,6 +30,7 @@
     <Elem>../zForth/forth</Elem>
     <Elem>../xprintf/src</Elem>
     <Elem>../zForth/src/zforth</Elem>
+    <Elem>../tinyseq</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -38,7 +40,7 @@
         <targetDevice>PIC32MX270F256B</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>noID</platformTool>
+        <platformTool>snap</platformTool>
         <languageToolchain>XC32</languageToolchain>
         <languageToolchainVersion>4.00</languageToolchainVersion>
         <platform>3</platform>
@@ -82,7 +84,7 @@
         <property key="enable-unroll-loops" value="false"/>
         <property key="exclude-floating-point" value="false"/>
         <property key="extra-include-directories"
-                  value=".;..\zForth\src\zforth;..\xprintf\src"/>
+                  value=".;..\zForth\src\zforth;..\xprintf\src;..\tinyseq"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="false"/>
