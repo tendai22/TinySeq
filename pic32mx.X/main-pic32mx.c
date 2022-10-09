@@ -324,7 +324,8 @@ void put_outbits(const uint8_t *bits)
 void get_inbits(uint8_t *bits)
 {
     // portB0-7 bit0-7 --> X000-007
-    bits[0] = mcp_read(devAdd, 0x13);      // MCP23017portB_Read
+    // GPIO input value is inverted due to circuitry design
+    bits[0] = mcp_read(devAdd, 0x13) ^ 0xff;      // MCP23017portB_Read
 }
 
 //
@@ -384,13 +385,12 @@ void  __ISR(_TIMER_1_VECTOR, IPL1AUTO)do_intr(void)
         IFS0bits.T1IF = 0;
         usec_counter++;
         now++;
-        //set_statusflag(1);
         flag = 1;
     }
     flag = 0;
-    if (now >= 10000) {   // maybe, 100ms
+    if (now >= 500) {   // maybe, 100ms
         now = 0;
-        //xputc('x');
+        do_timer();
         flag = 1;
     }
 }
@@ -410,8 +410,12 @@ void main(void)
     xdev_out(_mon_putc);
     xdev_in(_mon_getc);
     int c;
+
+//    test_I2C();
+    
     init_I2C();
     mcp_init();
+
 
     delay_us(10);
     init_timer();

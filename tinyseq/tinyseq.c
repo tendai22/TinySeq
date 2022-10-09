@@ -62,11 +62,13 @@ void set_cur_bit(int n) {   SET_BIT(bits,n); }
 void clr_cur_bit(int n) {   CLR_BIT(bits,n); }
 void toggle_cur_bit(int n) {   TGL_BIT(bits,n); }
 
-int compare_bits(void)
+int compare_bits(int doprint_flag)
 {
     extern void print_bits(int flag);
     int res = memcmp(bits, prev_bits, BITS_SIZE) != 0;
-    if (res) {
+    
+    //doprint_flag = 0;
+    if (doprint_flag && res) {
         print_bits(1);
         print_bits(0);
     }
@@ -154,8 +156,9 @@ void do_timer(void)
     // examine inport
     get_inbits(&bits[0]);
     // check if any changes occur
-    if (compare_bits()) {
-        xprintf("%ld: changed\n", get_seq_clock());
+    if (compare_bits(0)) {
+        //xprintf("%ld: changed\n", get_seq_clock());
+        xputc('x');
         set_statusflag(1); // activate do_ladder
     }
 }
@@ -169,17 +172,20 @@ void do_ladder(void)
 	uint32_t start;
 	start = get_seq_clock();
     res = ZF_OK;
-    xprintf("begin ladder\n");
-    while (count-- > 0 && (compare_bits() && res == ZF_OK)) {
+    //
+    // Repeatedly invoke 'ladder' function until no 'bit changes' occur
+    //
+    //xprintf("begin ladder\n");
+    while (count-- > 0 && (compare_bits(1) && res == ZF_OK)) {
         copy_bits();
     	res = zf_eval("ladder ");
     }
-    xprintf("end\n");
+    //xprintf("end\n");
     put_outbits(&bits[0]);
 	if (res == ZF_OK) {
-		xprintf("%ld -> %ld\n", start, get_seq_clock());
+		//xprintf("%ld -> %ld\n", start, get_seq_clock());
 	} else {
-		xprintf("err = %d\n", res);
+		//xprintf("err = %d\n", res);
 	}
 }
 

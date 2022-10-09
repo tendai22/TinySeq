@@ -59,7 +59,7 @@ extern void set_cur_bit(int n);
 extern void clr_cur_bit(int n);
 extern void toggle_cur_bit(int n);
 // compare/copy to bits to prev_bits
-extern int compare_bits(void);
+extern int compare_bits(int doprint_flag);
 extern void copy_bits(void);
 //
 // bit array to/from gpio, machine dependent, defined in each
