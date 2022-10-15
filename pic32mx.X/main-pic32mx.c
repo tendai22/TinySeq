@@ -251,13 +251,13 @@ static char devAdd = MCP_ADDR;
 
 int mcp_init (void)
 {
-#if 0
-    if (i2c_write(devAdd) == -1) {  // check device existence.
-        xprintf("mcp init failure\n");
+    int count = 10;
+    while (count-- > 0 && mcp_write(devAdd, 0x00, 0x00) != 0)
+        delay_us(200);   // IODIRA
+    if (count <= 0) {
+        xprintf("mcp time out\n");
         return -1;
     }
-#endif
-    mcp_write(devAdd, 0x00, 0x00);   // IODIRA
     mcp_write(devAdd, 0x01, 0xFF);   // IODIRB
     mcp_write(devAdd, 0x02, 0x00);   // IPOLA
     mcp_write(devAdd, 0x03, 0x00);   // IPOLB
@@ -269,7 +269,8 @@ int mcp_init (void)
 uint8_t mcp_read(uint8_t dev_addr, uint8_t reg)
 {
     unsigned char res;
-    i2c_start(dev_addr);
+    if (i2c_start(dev_addr) != 0)
+        return -1;
     i2c_write(reg);         // register address for MCP23017
     // I2C read
     I2C1CONbits.ACKDT = 1;  // send NAK for the last data
@@ -292,7 +293,8 @@ uint8_t mcp_read(uint8_t dev_addr, uint8_t reg)
 int mcp_write(unsigned char dev_addr, unsigned char reg, unsigned char data)
 {
     int count = 30000;
-    i2c_start(dev_addr);
+    if (i2c_start(dev_addr) != 0)
+        return -1;
     i2c_write(reg);         // MCP23017 register addr
     i2c_write(data);        // byte to be written
     I2C1CONbits.PEN = 1;    // closing
@@ -425,6 +427,9 @@ void test_prom(void)
     }
     xprintf("\n");
     prom_page_write(PROM_ADDR, 0, &buf[0], 10);
+    for (int i = 0; i < 10; ++i) {
+        buf[i] += 0;
+    }
     while (prom_read(PROM_ADDR, 0, &buf[0], 16) != 0) {
         delay_us(200);
     }
@@ -542,7 +547,7 @@ void main(void)
     xdev_in(_mon_getc);
     int c;
 
-//    test_I2C();
+    test_I2C();
     
     i2c_init();
     mcp_init();
