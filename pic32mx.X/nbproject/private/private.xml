@@ -5,6 +5,7 @@
         <group>
             <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/xprintf/src/xprintf.c</file>
             <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/pic32mx.X/main-pic32mx.c</file>
+            <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/pic32mx.X/nbproject/Makefile-default.mk</file>
             <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/zForth/src/zforth/zmain.c</file>
             <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/tinyseq/tinyseq.c</file>
             <file>file:/D:/tendai22plus/MPLABXProjects/TinySeq/zForth/src/zforth/zforth.c</file>

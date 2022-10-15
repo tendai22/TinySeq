@@ -180,14 +180,13 @@ int zf_getline(char *buf, int siz)
 #define PBCLK  (SYSCLK/2)
 //#pragma config FPBDIV = DIV_1				//Sets PBCLK to SYSCLK
 
-#define Fsck	100000
+#define Fsck	400000
 #define BRG_VAL 	((PBCLK/2/Fsck)-2)
 
-#define MCP_ADDR 0x40
-#define MCP_CMD_RD (MCP_ADDR|0x1)
-#define MCP_CMD_WR (MCP_ADDR|0x0)
+int i2c_write(unsigned char);
+void i2c_idle(void);
 
-void init_I2C(void)
+void i2c_init(void)
 {
     I2C1CON = 0;
         // I2C_ON: bit15
@@ -200,57 +199,84 @@ void init_I2C(void)
 //    printf("BRG_VAL=%d\r\n", BRG_VAL);
 }
 
-//
-// I/O Expander MCP23017 I2C driver
-//
-
-void mcp_init(void);
-unsigned char mcp_read(unsigned char, unsigned char);
-void mcp_write(unsigned char, unsigned char, unsigned char);
-void i2c_write(unsigned char);
-void i2c_idle(void);
-
-static char devAdd = MCP_ADDR;
-
-void mcp_init (void)
-{
-    mcp_write(devAdd, 0x00, 0x00);   // IODIRA
-    mcp_write(devAdd, 0x01, 0xFF);   // IODIRB
-    mcp_write(devAdd, 0x02, 0x00);   // IPOLA
-    mcp_write(devAdd, 0x03, 0x00);   // IPOLB
-    mcp_write(devAdd, 0x0D, 0xFF);   // GPPUB
-    mcp_write(devAdd, 0x0A, 0x00);   // IOCON/BANK0
-}
-
 void i2c_idle(void)
 {
     while(I2C1CONbits.SEN || I2C1CONbits.PEN || I2C1CONbits.RCEN || I2C1CONbits.ACKEN)
         ;
 }
 
-void i2c_write(unsigned char data)
+int i2c_write(unsigned char data)
 {
+    int count = 30000;
+    
     I2C1TRN = data;
     while(I2C1STATbits.TBF);
-    while(I2C1STATbits.TRSTAT);   // wait for TX complete and receive Ack/Nack
-    i2c_idle();				      //
+    while(I2C1STATbits.TRSTAT)
+        ;   // wait for TX complete and receive Ack/Nack
+    i2c_idle();
+    if (I2C1STATbits.ACKSTAT) {
+        return -1;
+    }
+    return 0;
 }
 
-unsigned char mcp_read(unsigned char addr, unsigned char reg)
+int i2c_start(uint8_t dev_addr)
 {
-    unsigned char res;
-    i2c_idle();                          // ??????
-    I2C1CONbits.SEN = 1;               // ???????????
+    i2c_idle();
+    I2C1CONbits.SEN = 1;    // start
     while(I2C1CONbits.SEN)
         ;                   // wait for S complete
-    i2c_write(addr);        // I2C device address for MCP23017
+    if (i2c_write(dev_addr) == -1) {    // I2C device address for AT24C256
+        I2C1CONbits.PEN = 1;    // start closing
+        while(I2C1CONbits.PEN)
+            ;                   // wait for its completion
+        return -1;      // Device not ready
+    }
+    return 0;
+    
+}
+
+//
+// I/O Expander MCP23017 I2C driver
+//
+#define MCP_ADDR 0x40
+#define MCP_CMD_RD (MCP_ADDR|0x1)
+#define MCP_CMD_WR (MCP_ADDR|0x0)
+
+int mcp_init(void);
+unsigned char mcp_read(unsigned char, unsigned char);
+int mcp_write(unsigned char, unsigned char, unsigned char);
+
+static char devAdd = MCP_ADDR;
+
+int mcp_init (void)
+{
+#if 0
+    if (i2c_write(devAdd) == -1) {  // check device existence.
+        xprintf("mcp init failure\n");
+        return -1;
+    }
+#endif
+    mcp_write(devAdd, 0x00, 0x00);   // IODIRA
+    mcp_write(devAdd, 0x01, 0xFF);   // IODIRB
+    mcp_write(devAdd, 0x02, 0x00);   // IPOLA
+    mcp_write(devAdd, 0x03, 0x00);   // IPOLB
+    mcp_write(devAdd, 0x0D, 0xFF);   // GPPUB
+    mcp_write(devAdd, 0x0A, 0x00);   // IOCON/BANK0
+    return 0;
+}
+
+uint8_t mcp_read(uint8_t dev_addr, uint8_t reg)
+{
+    unsigned char res;
+    i2c_start(dev_addr);
     i2c_write(reg);         // register address for MCP23017
     // I2C read
     I2C1CONbits.ACKDT = 1;  // send NAK for the last data
     I2C1CONbits.SEN = 1;    // restart
     while(I2C1CONbits.SEN)
         ;                   // wait for RS complete
-    i2c_write(addr | 0x01);  // I2C device address with R bit
+    i2c_write(dev_addr | 0x01);  // I2C device address with R bit
     I2C1CONbits.RCEN = 1;   // data receive start
     while(!I2C1STATbits.RBF)
         ;                   // wait for data receiving complete
@@ -263,25 +289,23 @@ unsigned char mcp_read(unsigned char addr, unsigned char reg)
     return res;
 }
 
-void mcp_write(unsigned char addr, unsigned char reg, unsigned char data)
+int mcp_write(unsigned char dev_addr, unsigned char reg, unsigned char data)
 {
-    i2c_idle();
-    I2C1CONbits.SEN = 1;
-    while(I2C1CONbits.SEN)
-        ;
-    i2c_write(addr);        // I2C device addr
+    int count = 30000;
+    i2c_start(dev_addr);
     i2c_write(reg);         // MCP23017 register addr
     i2c_write(data);        // byte to be written
     I2C1CONbits.PEN = 1;    // closing
-    while(I2C1CONbits.PEN)
+    while(count-- > 0 && I2C1CONbits.PEN)
         ; // wait for its completion
+    return count > 0 ? 0 : !0;
 }
 
 unsigned char ledData[6] = {0x08,0x04,0x02,0x01,0x02,0x04};
 
 void test_I2C(void)
 {
-    init_I2C();
+    i2c_init();
     // mcp_init
     mcp_init();
     char i = 0;
@@ -302,6 +326,113 @@ void test_I2C(void)
         }
         delay_ms(100);
     }
+}
+
+//
+// I2C EEPROM/FLASH device
+//
+
+#define PROM_ADDR 0xa0
+#define PAGE_SIZE 64    // AT24C128,256
+
+
+void prom_init(void)
+{
+    // do nothing, no pre-initialization on AT24C256 is needed.
+}
+
+int prom_read(uint8_t dev_addr, uint16_t addr, char *dest, int len)
+{
+    unsigned char res;
+    if (i2c_start(dev_addr) != 0)
+        return -1;
+    i2c_write(addr>>8);     // EEPROM address high
+    i2c_write(addr&0xff);   // EEPROM address low
+    // I2C read
+    I2C1CONbits.SEN = 1;    // restart
+    while(I2C1CONbits.SEN)
+        ;                   // wait for RS complete
+    i2c_write(dev_addr | 0x01);  // I2C device address with R bit
+    while (len-- > 0) {
+        I2C1CONbits.RCEN = 1;   // data receive start
+        while(!I2C1STATbits.RBF)
+            ;                   // wait for data receiving complete
+        if (dest)
+            *dest++ = I2C1RCV;       // get received data
+        I2C1CONbits.ACKDT = (len == 0 ? 1 : 0);  // 1 ... NAK, 0 ... ACK 
+        I2C1CONbits.ACKEN = 1;  // start to send ACKDT bit as ACK
+        i2c_idle();             // wait for its completion
+    }
+    I2C1CONbits.PEN = 1;    // start closing
+    while(I2C1CONbits.PEN)
+        ;                   // wait for its completion
+    return 0;
+}
+
+int prom_write(uint8_t dev_addr, uint16_t addr, uint8_t data)
+{
+    int count = 30000;
+    i2c_start(dev_addr);
+    i2c_write(addr>>8);         // MCP23017 register addr
+    i2c_write(addr&0xff);
+    i2c_write(data);        // byte to be written
+    I2C1CONbits.PEN = 1;    // closing
+    while(count-- > 0 && I2C1CONbits.PEN)
+        ; // wait for its completion
+    return count > 0 ? 0 : !0;
+}
+
+//
+//
+//
+
+
+int prom_page_write(uint8_t dev_addr, uint16_t addr, uint8_t *src, int len)
+{
+    int count = 30000;
+    i2c_start(dev_addr);        // I2C device addr
+    i2c_write(addr>>8);         // MCP23017 register addr
+    i2c_write(addr&0xff);
+    while (len-- > 0) {
+        i2c_write(*src++);        // byte to be written
+    }
+    I2C1CONbits.PEN = 1;    // closing
+    while(count-- > 0 && I2C1CONbits.PEN)
+        ; // wait for its completion
+    return count > 0 ? 0 : !0;
+}
+
+void test_prom(void)
+{
+    uint8_t c;
+    uint8_t buf[16], *p;
+    xprintf("eeprom test\n");
+    int count = 10;
+    while (count-- > 0 && prom_read(PROM_ADDR, 0, &buf[0], 16) != 0)
+        delay_us(200);
+    if (count <= 0) {
+        xprintf("eeprom not found\n");
+        while(1);
+        return;
+    }
+    // read success
+    xprintf("count = %d\n", count);
+    for (int i = 0; i < 16; ++i) {
+        xprintf("%02x ", buf[i]);
+    }
+    for (int i = 0; i < 10; ++i) {
+        buf[i] += 10 + i;
+    }
+    xprintf("\n");
+    prom_page_write(PROM_ADDR, 0, &buf[0], 10);
+    while (prom_read(PROM_ADDR, 0, &buf[0], 16) != 0) {
+        delay_us(200);
+    }
+    for (int i = 0; i < 16; ++i) {
+        xprintf("%02x ", buf[i]);
+    }
+    xprintf("\n");
+    while (1);
 }
 
 //
@@ -413,8 +544,11 @@ void main(void)
 
 //    test_I2C();
     
-    init_I2C();
+    i2c_init();
     mcp_init();
+    prom_init();
+    
+    test_prom();
 
 
     delay_us(10);
