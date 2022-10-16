@@ -305,9 +305,8 @@ int mcp_write(unsigned char dev_addr, unsigned char reg, unsigned char data)
 
 unsigned char ledData[6] = {0x08,0x04,0x02,0x01,0x02,0x04};
 
-void test_I2C(void)
+void test_mcp(void)
 {
-    i2c_init();
     // mcp_init
     mcp_init();
     char i = 0;
@@ -444,14 +443,32 @@ void test_prom(void)
 // bit array to/from gpio, machine dependent, defined in each
 // platform.
 //
+void gpio_init(void)
+{
+    // need to initialize PORTA, PORTB
+    // RB2,3,4,5,7,10,11,13,14,15 are already set as input
+    // set pull-up on all input pins
+    //TRISB |= (1<<10)|(1<<11);
+    //CNPUB |= (1<<2)|(1<<3)|(1<<4)|(1<<5)|(1<<7)|(1<<10)|
+    //            (1<<11)|(1<<13)|(1<<14)|(1<<15);    // as input
+    // set output on RA1,3,4
+    TRISA &= ~((1<<1)|(1<<3)|(1<<4));
+}
 
 //
 // put_outbits: gpio output interface for tinyseq
 //
 void put_outbits(const uint8_t *bits)
 {
+    uint8_t c;
     // Y000-007 bit16-23 -> portA0-7
     mcp_write(devAdd, 0x12, bits[2]);   // MCP23017portA_Write
+    c = PORTA & 0xffe5;
+    // Y008 -> RA1, Y009 -> RA3, Y010 -> RA4
+    if (bits[3] & (1<<0)) c |= (1<<1);
+    if (bits[3] & (1<<1)) c |= (1<<3);
+    if (bits[3] & (1<<2)) c |= (1<<4);
+    PORTA = c;
 }
 
 //
@@ -459,9 +476,20 @@ void put_outbits(const uint8_t *bits)
 //
 void get_inbits(uint8_t *bits)
 {
+    uint8_t c;
     // portB0-7 bit0-7 --> X000-007
     // GPIO input value is inverted due to circuitry design
     bits[0] = mcp_read(devAdd, 0x13) ^ 0xff;      // MCP23017portB_Read
+    c = 0;
+    // PORTB[2:5] --> X008-X011
+    c |= ((PORTB >> 2) & 0x0f);
+    if (PORTBbits.RB7) c |= (1<<4);
+    if (PORTBbits.RB10) c |= (1<<5);
+    if (PORTBbits.RB11) c |= (1<<6);
+    if (PORTBbits.RB13) c |= (1<<7);
+    bits[1] = (c ^ 0xff);   // inverted
+    // PORTB[14:15] --> X016,017
+    bits[8] = ((PORTB >> 14) & 0x3) ^ 0xff; // inverted
 }
 
 //
@@ -547,13 +575,12 @@ void main(void)
     xdev_in(_mon_getc);
     int c;
 
-    test_I2C();
-    
     i2c_init();
+//    test_mcp();
     mcp_init();
     prom_init();
     
-    test_prom();
+//    test_prom();
 
 
     delay_us(10);

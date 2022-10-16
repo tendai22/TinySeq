@@ -41,8 +41,8 @@
 //
 // constants
 //
-#define NUM_BITS    64
-#define BITS_SIZE   (NUM_BITS/8)
+#define NUM_BITS    66
+#define BITS_SIZE   ((NUM_BITS + 7)/8)
 
 #define START_COIL 48
 #define NUM_COIL 16

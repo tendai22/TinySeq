@@ -84,6 +84,7 @@ void print_bits(int flag)
 {
     const uint8_t *p = (flag ? prev_bits : bits);
     xprintf("%c ", (flag ? 'p' : 'c'));
+    xprintf("%02b ", (p[8]&0x3));
     for (int i = 7; i >= 0; --i) {
         xprintf("%08b ", p[i]);
     }
